@@ -1,0 +1,347 @@
+/* ==========================================================================
+   UNIFIED 3RD YEAR REVIEWER — MINIMALIST MONOCHROME THEME
+   Based on GEd 104 Design System • BatStateU Reviewer Suite
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Newsreader', Georgia, Cambria, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  touch-action: manipulation;
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* ==========================================
+   3D FLASHCARD FLIPPING ANIMATIONS
+   ========================================== */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.flashcard.flipped .flashcard-inner {
+  transform: rotateY(180deg);
+}
+
+/* ==========================================
+   INTERACTIVE TIMELINE STYLES
+   ========================================== */
+.timeline-track {
+  position: relative;
+}
+
+.timeline-track::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 10px;
+  right: 10px;
+  height: 2px;
+  background-color: #e4e4e7;
+  z-index: 1;
+}
+
+.dark .timeline-track::before {
+  background-color: #27272a;
+}
+
+.timeline-node {
+  position: relative;
+  z-index: 2;
+  transition: all 0.2s ease-in-out;
+}
+
+.timeline-node.active-node {
+  transform: scale(1.1);
+}
+
+/* Vertical Timeline for Mobile & Details */
+.v-timeline-item {
+  position: relative;
+  padding-left: 28px;
+}
+
+.v-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 12px;
+  bottom: -12px;
+  width: 2px;
+  background-color: #e4e4e7;
+}
+
+.dark .v-timeline-item::before {
+  background-color: #27272a;
+}
+
+.v-timeline-item:last-child::before {
+  display: none;
+}
+
+.v-timeline-dot {
+  position: absolute;
+  left: 3px;
+  top: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #09090b;
+  background-color: #ffffff;
+}
+
+.dark .v-timeline-dot {
+  border-color: #f4f4f5;
+  background-color: #18181b;
+}
+
+/* ==========================================
+   COVER & RECALL COMPARISON STYLES
+   ========================================== */
+.recall-covered {
+  filter: blur(5px);
+  user-select: none;
+  cursor: pointer;
+  background-color: rgba(228, 228, 231, 0.4);
+  transition: filter 0.25s ease, background-color 0.25s ease;
+}
+
+.dark .recall-covered {
+  background-color: rgba(39, 39, 42, 0.4);
+}
+
+.recall-covered:hover {
+  filter: blur(2px);
+}
+
+.recall-revealed {
+  filter: blur(0);
+  user-select: auto;
+  background-color: transparent;
+}
+
+/* ==========================================
+   ENUMERATION REVEAL CARDS
+   ========================================== */
+.enum-card {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.enum-hidden-content {
+  display: none;
+}
+
+.enum-card.revealed .enum-hidden-content {
+  display: block;
+}
+
+/* ==========================================
+   CAUSE & EFFECT STEP FLOW
+   ========================================== */
+.flow-step-arrow {
+  position: relative;
+}
+
+.flow-step-arrow::after {
+  content: '↓';
+  display: block;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: #a1a1aa;
+  margin: 4px 0;
+}
+
+/* ==========================================
+   CATEGORY TREE INDENTATION
+   ========================================== */
+.tree-branch {
+  position: relative;
+  padding-left: 20px;
+}
+
+.tree-branch::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background-color: #e4e4e7;
+}
+
+.dark .tree-branch::before {
+  background-color: #27272a;
+}
+
+/* ==========================================
+   MICRO-ANIMATIONS & TRANSITIONS
+   ========================================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.transition-width {
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================
+   TOAST NOTIFICATION ENGINE
+   ========================================== */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  min-width: 260px;
+  max-width: 380px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ==========================================
+   CONFETTI PARTICLES
+   ========================================== */
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.confetti-particle {
+  position: fixed;
+  top: -10px;
+  z-index: 9999;
+  pointer-events: none;
+  animation: confettiFall linear forwards;
+}
+
+/* ==========================================
+   PRINT STYLESHEET (CLEAN CRAM SHEET)
+   ========================================== */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11px !important;
+  }
+  
+  header, nav, #btn-quick-print, .no-print, .mobile-dock, #course-selector-view {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+
+  .print-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+  }
+
+  .print-card {
+    border: 1px solid #000000 !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 12px !important;
+  }
+}

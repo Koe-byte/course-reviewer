@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BatStateU 3rd Year Reviewer Suite • Centralized Academic Hub</title>
+  <meta name="description" content="Centralized academic review suite for BatStateU 3rd Year courses: GEd 104 The Contemporary World, IT 321 Human-Computer Interaction, and CS 312 Mobile Computing.">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fafafa',
+              100: '#f4f4f5',
+              200: '#e4e4e7',
+              300: '#d4d4d8',
+              400: '#a1a1aa',
+              500: '#71717a',
+              600: '#52525b',
+              700: '#3f3f46',
+              800: '#27272a',
+              900: '#18181b',
+              950: '#09090b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 min-h-screen flex flex-col font-sans transition-colors duration-200 antialiased pb-20 md:pb-8">
+
+  <!-- ==========================================
+       TOP GLOBAL HEADER
+       ========================================== -->
+  <header class="sticky top-0 z-40 w-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 transition-colors">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      
+      <!-- Brand & Back Button -->
+      <div class="flex items-center gap-3 min-w-0">
+        <!-- Back to Course Selector Button (Shown when inside a module) -->
+        <button
+          id="header-back-btn"
+          onclick="UNIFIED_ROUTER.backToCourses()"
+          class="hidden p-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-xs font-mono font-semibold flex items-center gap-1.5 shrink-0"
+          title="Return to Course Selection"
+        >
+          <span>←</span>
+          <span class="hidden sm:inline">All Courses</span>
+        </button>
+
+        <div class="flex items-center gap-2.5 min-w-0 cursor-pointer" onclick="UNIFIED_ROUTER.backToCourses()">
+          <div id="header-monogram" class="w-8 h-8 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center font-mono font-bold text-xs shrink-0 shadow-sm">
+            3Y
+          </div>
+          <div class="truncate">
+            <h1 id="header-brand-title" class="font-serif font-bold text-sm sm:text-base leading-tight truncate text-zinc-900 dark:text-zinc-100">
+              BatStateU 3rd Year Reviewer Suite
+            </h1>
+            <p id="header-brand-sub" class="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 truncate">
+              Centralized Academic Mastery Hub
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Navigation Tabs (Injected dynamically) -->
+      <nav id="header-desktop-tabs" class="hidden md:flex items-center gap-1.5 overflow-x-auto py-1">
+        <span class="text-xs font-mono text-zinc-400 dark:text-zinc-500 py-1.5 px-3">
+          3 Courses Available • 100% Exam-Aligned
+        </span>
+      </nav>
+
+      <!-- Right Utility Actions -->
+      <div class="flex items-center gap-1.5 shrink-0">
+        <!-- Print Trigger -->
+        <button
+          onclick="window.print()"
+          class="p-2 rounded-xl text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          title="Print or Save PDF"
+          aria-label="Print or Save PDF"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button
+          onclick="UNIFIED_ROUTER.toggleTheme()"
+          class="p-2 rounded-xl text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          title="Toggle Monochrome / Dark Theme"
+          aria-label="Toggle Monochrome / Dark Theme"
+        >
+          <!-- Sun Icon (shown in dark mode) -->
+          <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <!-- Moon Icon (shown in light mode) -->
+          <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <!-- Reset Modal Trigger -->
+        <button
+          onclick="openResetModal()"
+          class="p-2 rounded-xl text-zinc-500 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          title="Reset Study Progress"
+          aria-label="Reset Progress"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       MAIN CONTENT WRAPPER
+       ========================================== -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <!-- View 1: Course Selector Landing (Shown by default) -->
+    <section id="course-selector-view"></section>
+
+    <!-- View 2: Active Module View Container (Populated dynamically) -->
+    <section id="main-content" class="hidden"></section>
+  </main>
+
+  <!-- ==========================================
+       MOBILE BOTTOM DOCK NAVIGATION
+       ========================================== -->
+  <aside id="mobile-dock" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 px-3 py-1 transition-colors">
+    <div class="py-2.5 text-center text-xs font-mono text-zinc-500">
+      Select a course above to begin reviewing
+    </div>
+  </aside>
+
+  <!-- ==========================================
+       RESET CONFIRMATION MODAL
+       ========================================== -->
+  <div id="reset-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm hidden animate-fade-in">
+    <div class="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-7 border border-zinc-200 dark:border-zinc-800 shadow-2xl space-y-6">
+      <div class="space-y-2">
+        <div class="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center font-mono font-bold text-base">
+          !
+        </div>
+        <h3 class="text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100">
+          Reset Progress & History
+        </h3>
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+          Resetting will clear mastered cards, practice exam attempts, and interactive quiz logs stored in your browser. Choose your reset scope:
+        </p>
+      </div>
+
+      <div class="space-y-2 font-mono text-xs">
+        <button
+          onclick="confirmReset('cw')"
+          class="w-full py-2.5 px-4 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left flex items-center justify-between text-zinc-700 dark:text-zinc-300"
+        >
+          <span>Reset Contemporary World Only</span>
+          <span>→</span>
+        </button>
+        <button
+          onclick="confirmReset('hci')"
+          class="w-full py-2.5 px-4 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left flex items-center justify-between text-zinc-700 dark:text-zinc-300"
+        >
+          <span>Reset Human-Computer Interaction Only</span>
+          <span>→</span>
+        </button>
+        <button
+          onclick="confirmReset('mobcom')"
+          class="w-full py-2.5 px-4 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-left flex items-center justify-between text-zinc-700 dark:text-zinc-300"
+        >
+          <span>Reset Mobile Computing Only</span>
+          <span>→</span>
+        </button>
+        <button
+          onclick="confirmReset('all')"
+          class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-left flex items-center justify-between"
+        >
+          <span>Reset ALL 3 Courses & Settings</span>
+          <span>⚠</span>
+        </button>
+      </div>
+
+      <div class="pt-2 border-t border-zinc-100 dark:border-zinc-800 flex justify-end">
+        <button
+          onclick="closeResetModal()"
+          class="px-4 py-2 rounded-xl text-xs font-mono font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       APPLICATION SCRIPTS
+       ========================================== -->
+  <!-- 1. Data Banks -->
+  <script src="js/data/data-cw.js"></script>
+  <script src="js/data/data-hci.js"></script>
+  <script src="js/data/data-mobcom.js"></script>
+
+  <!-- 2. Course Modules -->
+  <script src="js/modules/mod-cw.js"></script>
+  <script src="js/modules/mod-hci.js"></script>
+  <script src="js/modules/mod-mobcom.js"></script>
+
+  <!-- 3. Core App Controller & Router -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>
