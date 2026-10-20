@@ -1,5 +1,6 @@
 /**
  * Unified Reviewer — Course Module: CS 312 Mobile Computing
+ * Clean Minimalist Academic UI • Apple HIG Touch-First Mobile Layout
  */
 
 const MOBCOM_MODULE = (() => {
@@ -11,10 +12,16 @@ const MOBCOM_MODULE = (() => {
     currentCallStep: 0,
     currentCardIndex: 0,
     currentQuizIndex: 0,
-    selectedCategory: "all",
-    selectedGlossaryCat: "all",
+    selectedCategory: "midterm-all",
+    selectedGuideCategory: "midterm",
+    selectedQuizMode: "midterm",
+    selectedGlossaryCat: "midterm",
+    cheatSheetFocus: "midterm",
     isCardFlipped: false,
-    filteredCards: []
+    filteredCards: [],
+    activeQuizQuestions: [],
+    isShuffled: false,
+    hintTimer: null
   };
 
   function loadModuleState() {
@@ -22,7 +29,18 @@ const MOBCOM_MODULE = (() => {
       const raw = localStorage.getItem("unified_mobcom_state");
       if (raw) {
         const parsed = JSON.parse(raw);
-        state = { ...state, ...parsed };
+        state.cardMastery = parsed.cardMastery || {};
+        state.quizAnswers = parsed.quizAnswers || {};
+        state.guideReviewed = parsed.guideReviewed || {};
+        state.bestScore = parsed.bestScore || 0;
+        if (parsed.activeQuizQuestionIds && parsed.activeQuizQuestionIds.length > 0) {
+          const map = new Map(MOBCOM_DATA.quizQuestions.map(q => [q.id, q]));
+          const restored = parsed.activeQuizQuestionIds.map(id => map.get(id)).filter(Boolean);
+          if (restored.length > 0) {
+            state.activeQuizQuestions = restored;
+            state.isShuffled = parsed.isShuffled || false;
+          }
+        }
       }
     } catch (e) {
       console.warn("Failed to load MobCom state:", e);
@@ -35,7 +53,9 @@ const MOBCOM_MODULE = (() => {
         cardMastery: state.cardMastery,
         quizAnswers: state.quizAnswers,
         guideReviewed: state.guideReviewed,
-        bestScore: state.bestScore
+        bestScore: state.bestScore,
+        activeQuizQuestionIds: state.activeQuizQuestions ? state.activeQuizQuestions.map(q => q.id) : [],
+        isShuffled: state.isShuffled || false
       }));
     } catch (e) {
       console.warn("Failed to save MobCom state:", e);
@@ -43,34 +63,67 @@ const MOBCOM_MODULE = (() => {
   }
 
   function calculateReadiness() {
-    // 1. Flashcards (35%)
-    const totalCards = MOBCOM_DATA.flashcards.length;
-    const masteredCards = MOBCOM_DATA.flashcards.filter(c => state.cardMastery[c.id] === true).length;
-    const flashcardScore = (masteredCards / totalCards) * 35;
+    const midtermCards = MOBCOM_DATA.flashcards.filter(c => c.isMidterm);
+    const masteredCount = midtermCards.filter(c => state.cardMastery[c.id] === true).length;
+    const flashcardScore = (masteredCount / Math.max(1, midtermCards.length)) * 35;
 
-    // 2. Quiz (35%)
-    const totalQuiz = MOBCOM_DATA.quizQuestions.length;
     let quizCorrect = 0;
-    Object.keys(state.quizAnswers).forEach(idx => {
-      if (state.quizAnswers[idx] === MOBCOM_DATA.quizQuestions[idx].correct) quizCorrect++;
+    const questionsToEval = (state.activeQuizQuestions && state.activeQuizQuestions.length > 0)
+      ? state.activeQuizQuestions
+      : MOBCOM_DATA.quizQuestions.filter(q => q.isMidterm);
+    questionsToEval.forEach((q, idx) => {
+      if (state.quizAnswers[idx] === q.correct) quizCorrect++;
     });
-    const quizScore = (quizCorrect / totalQuiz) * 35;
+    const quizScore = (quizCorrect / Math.max(1, questionsToEval.length)) * 35;
 
-    // 3. Guide Questions (30%)
-    const totalGuide = MOBCOM_DATA.guideQuestions.length;
-    const reviewedCount = Object.values(state.guideReviewed).filter(v => v === true).length;
-    const guideScore = (reviewedCount / totalGuide) * 30;
+    const midtermGuide = MOBCOM_DATA.guideQuestions.filter(g => g.isMidterm);
+    const reviewedCount = midtermGuide.filter(g => state.guideReviewed[g.num] === true).length;
+    const guideScore = (reviewedCount / Math.max(1, midtermGuide.length)) * 30;
 
     return Math.min(100, Math.max(0, Math.round(flashcardScore + quizScore + guideScore)));
   }
 
   function init() {
     loadModuleState();
-    filterFlashcards("all");
+    filterFlashcards("midterm-all");
+    updateActiveQuizQuestions();
   }
 
-  function renderView(tabId, container) {
-    switch (tabId) {
+  function updateActiveQuizQuestions(forceReset = false) {
+    if (forceReset || !state.activeQuizQuestions || state.activeQuizQuestions.length === 0) {
+      if (state.selectedQuizMode === "midterm") {
+        state.activeQuizQuestions = MOBCOM_DATA.quizQuestions.filter(q => q.isMidterm);
+      } else {
+        state.activeQuizQuestions = [...MOBCOM_DATA.quizQuestions];
+      }
+      state.isShuffled = false;
+    }
+    if (state.currentQuizIndex >= state.activeQuizQuestions.length) {
+      state.currentQuizIndex = 0;
+    }
+  }
+
+  function cleanupHintTimer() {
+    if (state.hintTimer) {
+      clearInterval(state.hintTimer);
+      state.hintTimer = null;
+    }
+  }
+
+  function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function renderView(toolId, container) {
+    if (toolId !== "quiz") {
+      cleanupHintTimer();
+    }
+    switch (toolId) {
       case "cheatsheet":
         renderCheatSheets(container);
         break;
@@ -83,347 +136,318 @@ const MOBCOM_MODULE = (() => {
       case "guide":
         renderGuideQuestions(container);
         break;
-      case "glossary":
-        renderGlossary(container);
-        break;
       default:
         renderCheatSheets(container);
     }
   }
 
-  // --- 1. CHEAT SHEETS VIEW ---
+  // =========================================================================
+  // --- 1. CHEAT SHEET (EDITORIAL ACADEMIC CRAM SHEET) ---
+  // =========================================================================
   function renderCheatSheets(container) {
-    const callStep = MOBCOM_DATA.callSteps[state.currentCallStep];
+    const callStep = MOBCOM_DATA.callSteps[state.currentCallStep] || MOBCOM_DATA.callSteps[0];
+    const isMidterm = state.cheatSheetFocus === "midterm";
 
     container.innerHTML = `
-      <div class="space-y-10 animate-fade-in">
-        <!-- Sprint Hero Banner -->
-        <div class="p-6 sm:p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-4">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div class="space-y-2 max-w-xl">
-              <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-mono bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">
-                <span>🚀</span> High-Retention Fast Cramming Matrix
+      <div class="space-y-6 sm:space-y-8 animate-fade-in pb-16 prose-container">
+        
+        <!-- Document Title & Exam Scope Header -->
+        <div class="space-y-2 pb-4 border-b border-zinc-200/80 dark:border-zinc-800/80">
+          <div class="flex items-center justify-between">
+            <span class="quiet-chip">CS 312 • ${isMidterm ? 'Midterm Examination' : 'Full Syllabus'}</span>
+            <span class="text-[11px] font-mono text-zinc-400">BatStateU CICS</span>
+          </div>
+          <h1 class="text-xl sm:text-2xl font-serif font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Mobile Computing Study Reference
+          </h1>
+          <p class="text-xs text-zinc-500 leading-relaxed">
+            Consolidated lecture summaries and examination pointers covering Mobile Internet Protocols, GSM Network Subsystems, and Cellular Wireless Architectures.
+          </p>
+        </div>
+
+        <!-- Section 1: Official Midterm Pointers Index -->
+        <div class="ios-inset-card p-4 sm:p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+              Exam Scope & Focus Objectives
+            </span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-semibold border border-amber-200/60 dark:border-amber-900/40">
+              Pointer Focus
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5">
+              <strong class="font-mono text-zinc-900 dark:text-zinc-100 block text-[11px]">Lesson 2: Mobile Internet Protocols</strong>
+              <ul class="space-y-1 text-zinc-600 dark:text-zinc-400 text-[11px]">
+                <li>• IP Addressing & Mobility Paradox (Identity vs Location)</li>
+                <li>• TCP vs. UDP Properties & Use Cases</li>
+                <li>• Mobile TCP Challenges (Congestion Fallacy)</li>
+                <li>• Mobile IP Process: MN, HA, FA, CoA, Tunneling</li>
+                <li>• Mobile IPv4 vs. IPv6 & NAT Elimination</li>
+              </ul>
+            </div>
+
+            <div class="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5">
+              <strong class="font-mono text-zinc-900 dark:text-zinc-100 block text-[11px]">Lesson 3: GSM Architecture & Flow</strong>
+              <ul class="space-y-1 text-zinc-600 dark:text-zinc-400 text-[11px]">
+                <li>• GSM ➔ GPRS ➔ EDGE (8-PSK, 384 kbps, AMC)</li>
+                <li>• 4 Subsystems: MS, BSS, NSS, OSS</li>
+                <li>• 6 NSS Nodes: MSC, GMSC, HLR, VLR, AuC, EIR</li>
+                <li>• SIM Architecture: IMSI, Ki, PIN/PUK</li>
+                <li>• 8-Stage GSM Call Transmission Sequence</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Lesson 2 Mobile IP -->
+        <div class="space-y-4">
+          <div class="pb-1 border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between">
+            <h2 class="text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
+              1. Mobile Internet Protocols (Lesson 2)
+            </h2>
+            <span class="text-[10px] font-mono text-zinc-400">RFC 3344</span>
+          </div>
+
+          <!-- Dual Role Dilemma Card -->
+          <div class="ios-inset-card p-4 space-y-2 text-xs">
+            <strong class="font-mono text-zinc-900 dark:text-zinc-100 block text-xs">
+              IP Addressing in Mobile Environments (The Dual-Role Problem)
+            </strong>
+            <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Standard IP addresses combine an <strong>Endpoint Identifier</strong> (TCP socket identity) with a <strong>Topological Routing Locator</strong> (physical subnet prefix).
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
+              <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70">
+                <span class="text-zinc-500 block mb-0.5 font-bold">Keeping Old IP:</span>
+                <span class="text-zinc-700 dark:text-zinc-300">Foreign routers cannot route packets to a home subnet prefix (routing failure).</span>
               </div>
-              <h2 class="text-2xl sm:text-3xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
-                CS 312 Mobile Computing
-              </h2>
-              <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Consolidated cheat sheets covering Module 1 (Intro), Module 2 (Networks & Media), and Module 3 (Cellular Systems) with interactive workflows and comparative matrices.
-              </p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <button onclick="UNIFIED_ROUTER.switchTab('flashcards')" class="px-4 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-semibold hover:opacity-90 transition-opacity">
-                📇 Flashcard Drill
-              </button>
-              <button onclick="UNIFIED_ROUTER.switchTab('quiz')" class="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                🎯 20-Q Mock Exam
-              </button>
+              <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/70 dark:border-zinc-700/70">
+                <span class="text-zinc-500 block mb-0.5 font-bold">Changing to New IP:</span>
+                <span class="text-zinc-700 dark:text-zinc-300">Active TCP sockets (4-tuple) break, terminating active connections.</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Sticky Jump Sub-bar -->
-        <div class="sticky top-20 z-30 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md p-2 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center gap-2 overflow-x-auto shadow-sm">
-          <span class="text-[11px] font-mono font-bold uppercase text-zinc-500 px-2 flex-shrink-0">Jump To:</span>
-          <a href="#mob-mod1" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 whitespace-nowrap transition-colors">Module 1: Intro</a>
-          <a href="#mob-mod2" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 whitespace-nowrap transition-colors">Module 2: Networks & Media</a>
-          <a href="#mob-mod3" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 whitespace-nowrap transition-colors">Module 3: Cellular</a>
-          <a href="#mob-calltrace" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-900 dark:text-zinc-100 whitespace-nowrap transition-colors">Call Trace Simulator</a>
-          <a href="#mob-genmatrix" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-900 dark:text-zinc-100 whitespace-nowrap transition-colors">1G-5G Matrix</a>
-        </div>
-
-        <!-- MODULE 1 -->
-        <div id="mob-mod1" class="space-y-6 pt-2">
-          <div class="pb-2 border-b border-zinc-200 dark:border-zinc-800">
-            <span class="text-xs font-mono uppercase text-zinc-500 font-semibold">Module 01</span>
-            <h3 class="text-xl font-serif font-bold text-zinc-900 dark:text-zinc-100">Introduction to Mobile Computing</h3>
+          <!-- TCP vs UDP Inset Table -->
+          <div class="ios-inset-card overflow-hidden text-xs">
+            <div class="px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 font-mono text-[11px] font-bold text-zinc-700 dark:text-zinc-300 border-b border-zinc-200/80 dark:border-zinc-800/80">
+              Transport Layer: TCP vs. UDP
+            </div>
+            <div class="divide-y divide-zinc-200/70 dark:divide-zinc-800/70 font-sans">
+              <div class="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span class="font-mono text-zinc-500 text-[11px] sm:w-32">Connection</span>
+                <span class="text-zinc-800 dark:text-zinc-200">TCP: 3-way handshake (SYN, SYN-ACK, ACK) | UDP: Connectionless (immediate)</span>
+              </div>
+              <div class="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span class="font-mono text-zinc-500 text-[11px] sm:w-32">Reliability</span>
+                <span class="text-zinc-800 dark:text-zinc-200">TCP: Guaranteed in-order retransmissions | UDP: Best-effort, no acknowledgments</span>
+              </div>
+              <div class="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span class="font-mono text-zinc-500 text-[11px] sm:w-32">Header Overhead</span>
+                <span class="text-zinc-800 dark:text-zinc-200">TCP: 20–60 bytes | UDP: 8 bytes fixed</span>
+              </div>
+              <div class="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span class="font-mono text-zinc-500 text-[11px] sm:w-32">Primary Uses</span>
+                <span class="text-zinc-800 dark:text-zinc-200">TCP: HTTP/HTTPS, File Transfer, Email | UDP: VoIP, Video Calling, Real-Time Gaming</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Master Definition -->
-          <div class="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
-            <span class="text-[11px] font-mono text-zinc-500 uppercase font-semibold">Formal Definition</span>
-            <p class="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-              <strong>Mobile Computing</strong> is a technology that allows the transmission of data, voice, and video via a computer or wireless-enabled device without physical cable links. It represents a <strong>computing environment designed for physical mobility</strong>.
+          <!-- Mobile IP Process & Tunneling -->
+          <div class="ios-inset-card p-4 space-y-3 text-xs">
+            <strong class="font-mono text-zinc-900 dark:text-zinc-100 block text-xs">
+              Mobile IP Architecture & Data Transfer (CN ➔ MN)
+            </strong>
+            <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              <strong>1. Agent Discovery:</strong> Home Agents (HA) and Foreign Agents (FA) advertise via ICMP.<br>
+              <strong>2. Registration:</strong> MN obtains a Care-of Address (CoA) and registers it with HA.<br>
+              <strong>3. Tunneling:</strong> HA intercepts packets for MN using Proxy ARP, encapsulates them (IP-in-IP), and tunnels them to CoA.<br>
+              <strong>4. Reverse Tunneling (RFC 3024):</strong> Required to bypass Ingress Filtering enforced by foreign network firewalls.
             </p>
           </div>
 
-          <!-- 3 Pillars Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <span class="text-2xl block">💻</span>
-              <strong class="text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100 block">1. Mobile Hardware</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">Physical portable units operating untethered from fixed power or cables (smartphones, tablets, wearables, IoT).</p>
-            </div>
-            <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <span class="text-2xl block">⚙️</span>
-              <strong class="text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100 block">2. Mobile Software</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">Lightweight operating systems (Android, iOS) and apps engineered to run inside hardware, thermal, and battery constraints.</p>
-            </div>
-            <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <span class="text-2xl block">📡</span>
-              <strong class="text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100 block">3. Mobile Communication</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">Wireless network infrastructure (cellular 4G/5G, Wi-Fi, satellites, Bluetooth) delivering data between clients and cloud servers.</p>
-            </div>
-          </div>
-
-          <!-- 4 Characteristics -->
-          <div class="space-y-3">
-            <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">4 Fundamental Characteristics</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-                <strong class="text-xs font-mono font-bold text-zinc-900 dark:text-zinc-100 block">1. Portability</strong>
-                <p class="text-xs text-zinc-500">Lightweight enough to be operated while in physical motion.</p>
-              </div>
-              <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-                <strong class="text-xs font-mono font-bold text-zinc-900 dark:text-zinc-100 block">2. Connectivity</strong>
-                <p class="text-xs text-zinc-500">Maintains persistent wireless link regardless of location.</p>
-              </div>
-              <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-                <strong class="text-xs font-mono font-bold text-zinc-900 dark:text-zinc-100 block">3. Interactivity</strong>
-                <p class="text-xs text-zinc-500">Real-time bidirectional exchange between clients and servers.</p>
-              </div>
-              <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-                <strong class="text-xs font-mono font-bold text-zinc-900 dark:text-zinc-100 block">4. Individuality</strong>
-                <p class="text-xs text-zinc-500">Deep personalization for a singular user (biometrics, profiles).</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- 7 Limitations Table -->
-          <div class="space-y-3">
-            <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">7 Limitations & Modern Countermeasures</h4>
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-zinc-100 dark:bg-zinc-800/60 font-mono text-[11px] uppercase tracking-wider text-zinc-700 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-800">
-                  <tr>
-                    <th class="py-2.5 px-3.5">#</th>
-                    <th class="py-2.5 px-3.5">Limitation</th>
-                    <th class="py-2.5 px-3.5">Bottleneck</th>
-                    <th class="py-2.5 px-3.5">Modern Solution</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                    <td class="py-2.5 px-3.5 font-mono">01</td>
-                    <td class="py-2.5 px-3.5 font-semibold text-zinc-900 dark:text-zinc-100">Battery Life</td>
-                    <td class="py-2.5 px-3.5 text-zinc-500">Electrochemical capacity constraints</td>
-                    <td class="py-2.5 px-3.5 text-emerald-600 dark:text-emerald-400">ARM big.LITTLE, GaN fast charging, OLED dark modes</td>
-                  </tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                    <td class="py-2.5 px-3.5 font-mono">02</td>
-                    <td class="py-2.5 px-3.5 font-semibold text-zinc-900 dark:text-zinc-100">Bandwidth Volatility</td>
-                    <td class="py-2.5 px-3.5 text-zinc-500">RF fluctuations & fading</td>
-                    <td class="py-2.5 px-3.5 text-emerald-600 dark:text-emerald-400">5G Carrier Aggregation, adaptive bitrates (DASH)</td>
-                  </tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                    <td class="py-2.5 px-3.5 font-mono">03</td>
-                    <td class="py-2.5 px-3.5 font-semibold text-zinc-900 dark:text-zinc-100">Security Risks</td>
-                    <td class="py-2.5 px-3.5 text-zinc-500">Open broadcast medium & physical theft</td>
-                    <td class="py-2.5 px-3.5 text-emerald-600 dark:text-emerald-400">TLS 1.3 encryption, biometric enclaves, remote wipe</td>
-                  </tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                    <td class="py-2.5 px-3.5 font-mono">04</td>
-                    <td class="py-2.5 px-3.5 font-semibold text-zinc-900 dark:text-zinc-100">Compute & Storage</td>
-                    <td class="py-2.5 px-3.5 text-zinc-500">Thermal limits in thin bodies</td>
-                    <td class="py-2.5 px-3.5 text-emerald-600 dark:text-emerald-400">Edge offloading, cloud sync, on-device NPUs</td>
-                  </tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                    <td class="py-2.5 px-3.5 font-mono">05</td>
-                    <td class="py-2.5 px-3.5 font-semibold text-zinc-900 dark:text-zinc-100">Screen & Input</td>
-                    <td class="py-2.5 px-3.5 text-zinc-500">Small surface & typing fatigue</td>
-                    <td class="py-2.5 px-3.5 text-emerald-600 dark:text-emerald-400">Foldable displays, AI voice dictation, multimodal UI</td>
-                  </tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                    <td class="py-2.5 px-3.5 font-mono">06</td>
-                    <td class="py-2.5 px-3.5 font-semibold text-zinc-900 dark:text-zinc-100">Heterogeneity</td>
-                    <td class="py-2.5 px-3.5 text-zinc-500">Fragmented screens & chipsets</td>
-                    <td class="py-2.5 px-3.5 text-emerald-600 dark:text-emerald-400">Cross-platform runtimes (Flutter/React Native)</td>
-                  </tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                    <td class="py-2.5 px-3.5 font-mono">07</td>
-                    <td class="py-2.5 px-3.5 font-semibold text-zinc-900 dark:text-zinc-100">Location Dependency</td>
-                    <td class="py-2.5 px-3.5 text-zinc-500">Dead zones & terrain blocks</td>
-                    <td class="py-2.5 px-3.5 text-emerald-600 dark:text-emerald-400">Seamless handoffs, LEO satellite direct-to-cell</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <!-- IPv4 vs IPv6 Summary -->
+          <div class="ios-inset-card p-4 space-y-2 text-xs">
+            <strong class="font-mono text-zinc-900 dark:text-zinc-100 block text-xs">
+              Mobile IPv4 vs. IPv6 & NAT Elimination
+            </strong>
+            <ul class="space-y-1.5 text-zinc-600 dark:text-zinc-400">
+              <li>• <strong>Foreign Agents:</strong> Required in MIPv4; completely eliminated in MIPv6 (SLAAC autoconfiguration).</li>
+              <li>• <strong>Route Optimization:</strong> Optional add-on in v4 causing triangular routing; built-in standard in v6.</li>
+              <li>• <strong>Security:</strong> Optional IPsec in v4; mandatory integrated IPsec in v6.</li>
+              <li>• <strong>NAT:</strong> Removed in IPv6 because $3.4 \times 10^{38}$ addresses restore true end-to-end IP communication without header modifications.</li>
+            </ul>
           </div>
         </div>
 
-        <!-- MODULE 2 -->
-        <div id="mob-mod2" class="space-y-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <div class="pb-2 border-b border-zinc-200 dark:border-zinc-800">
-            <span class="text-xs font-mono uppercase text-zinc-500 font-semibold">Module 02</span>
-            <h3 class="text-xl font-serif font-bold text-zinc-900 dark:text-zinc-100">Communication Networks & Transmission Media</h3>
+        <!-- Section 3: Lesson 3 GSM & 8-Stage Call Simulator -->
+        <div class="space-y-4 pt-2">
+          <div class="pb-1 border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between">
+            <h2 class="text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
+              2. GSM Subsystems & Call Transmission (Lesson 3)
+            </h2>
+            <span class="text-[10px] font-mono text-zinc-400">NSS / BSS / MS</span>
           </div>
 
-          <!-- 8 Elements Grid -->
-          <div class="space-y-3">
-            <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">8 Elements of Data Communication</h4>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div class="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block mb-0.5">1. Sender</strong><p class="text-zinc-500">Initiates message transmission.</p></div>
-              <div class="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block mb-0.5">2. Receiver</strong><p class="text-zinc-500">Target destination.</p></div>
-              <div class="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block mb-0.5">3. Encoder</strong><p class="text-zinc-500">Converts data to physical signals.</p></div>
-              <div class="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block mb-0.5">4. Decoder</strong><p class="text-zinc-500">Converts signals back to data.</p></div>
-              <div class="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block mb-0.5">5. Message</strong><p class="text-zinc-500">The information payload.</p></div>
-              <div class="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block mb-0.5">6. Medium</strong><p class="text-zinc-500">The physical conduit/channel.</p></div>
-              <div class="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block mb-0.5">7. Protocol</strong><p class="text-zinc-500">Governing rules & syntax.</p></div>
-              <div class="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block mb-0.5">8. Noise</strong><p class="text-zinc-500">Unwanted signal distortion.</p></div>
+          <!-- GSM Evolution Inset Table -->
+          <div class="ios-inset-card overflow-hidden text-xs">
+            <div class="px-4 py-2 bg-zinc-50 dark:bg-zinc-800/50 font-mono text-[11px] font-bold text-zinc-700 dark:text-zinc-300 border-b border-zinc-200/80 dark:border-zinc-800/80">
+              GSM Evolution: GSM ➔ GPRS ➔ EDGE
             </div>
-          </div>
-
-          <!-- 3 Quality Pillars DAT -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-              <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm block">1. Delivery</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Must arrive at the intended destination only without leaks.</p>
-            </div>
-            <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-              <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm block">2. Accuracy</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Must arrive intact and uncorrupted without bit errors.</p>
-            </div>
-            <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-              <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm block">3. Timeliness</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Must arrive in real time without lagging delay (vital for VoIP).</p>
-            </div>
-          </div>
-
-          <!-- Topologies Comparison -->
-          <div class="space-y-3">
-            <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">Network Topologies Comparison</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-              <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2 text-xs">
-                <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm block">Bus Topology</strong>
-                <p class="text-zinc-500">Single linear backbone cable with terminators at each end.</p>
-                <div class="text-[11px] text-zinc-600 dark:text-zinc-400 pt-1 border-t border-zinc-200 dark:border-zinc-800">
-                  <div class="text-emerald-600 dark:text-emerald-400">+ Cheap, easy</div>
-                  <div class="text-rose-600 dark:text-rose-400">- Cable cut downs network</div>
+            <div class="divide-y divide-zinc-200/70 dark:divide-zinc-800/70">
+              <div class="p-3 flex items-center justify-between">
+                <div>
+                  <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100">GSM (2G)</span>
+                  <span class="text-zinc-500 block text-[11px]">Circuit-switched voice, SMS, 9.6 kbps, GMSK (1 bit/symbol)</span>
                 </div>
               </div>
-              <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2 text-xs">
-                <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm block">Star Topology (Most Popular)</strong>
-                <p class="text-zinc-500">All nodes connect individually to a central switch/hub.</p>
-                <div class="text-[11px] text-zinc-600 dark:text-zinc-400 pt-1 border-t border-zinc-200 dark:border-zinc-800">
-                  <div class="text-emerald-600 dark:text-emerald-400">+ Fault isolation</div>
-                  <div class="text-rose-600 dark:text-rose-400">- Switch is single failure point</div>
+              <div class="p-3 flex items-center justify-between">
+                <div>
+                  <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100">GPRS (2.5G)</span>
+                  <span class="text-zinc-500 block text-[11px]">Packet-switched domain, volume billing, 114 kbps, SGSN/GGSN</span>
                 </div>
               </div>
-              <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2 text-xs">
-                <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm block">Ring Topology</strong>
-                <p class="text-zinc-500">Unidirectional token-passing closed loop.</p>
-                <div class="text-[11px] text-zinc-600 dark:text-zinc-400 pt-1 border-t border-zinc-200 dark:border-zinc-800">
-                  <div class="text-emerald-600 dark:text-emerald-400">+ Predictable token delay</div>
-                  <div class="text-rose-600 dark:text-rose-400">- Break breaks entire loop</div>
-                </div>
-              </div>
-              <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2 text-xs">
-                <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm block">Mesh Topology</strong>
-                <p class="text-zinc-500">Every node links to every other node ($n(n-1)/2$).</p>
-                <div class="text-[11px] text-zinc-600 dark:text-zinc-400 pt-1 border-t border-zinc-200 dark:border-zinc-800">
-                  <div class="text-emerald-600 dark:text-emerald-400">+ Maximum fault tolerance</div>
-                  <div class="text-rose-600 dark:text-rose-400">- Highest cost</div>
+              <div class="p-3 flex items-center justify-between bg-amber-50/40 dark:bg-amber-950/20">
+                <div>
+                  <span class="font-mono font-bold text-amber-900 dark:text-amber-200">EDGE (2.75G)</span>
+                  <span class="text-zinc-600 dark:text-zinc-400 block text-[11px]">8-PSK (3 bits/symbol), 384 kbps, Adaptive Modulation & Coding (AMC), Incremental Redundancy</span>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- MODULE 3 -->
-        <div id="mob-mod3" class="space-y-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <div class="pb-2 border-b border-zinc-200 dark:border-zinc-800">
-            <span class="text-xs font-mono uppercase text-zinc-500 font-semibold">Module 03</span>
-            <h3 class="text-xl font-serif font-bold text-zinc-900 dark:text-zinc-100">Cellular Wireless Networks</h3>
-          </div>
-
-          <!-- Hexagons & Frequency Reuse -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm block">⬡ Why Hexagons?</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Circles create gaps (dead zones) or overlapping interference. Regular hexagons provide <strong>100% gapless surface tessellation</strong> with equal distances to all 6 adjacent cell centers.
-              </p>
-            </div>
-            <div class="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm block">📡 Frequency Reuse</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Reusing the exact same frequency channels in geographically separated non-adjacent cells ($N=7$ cluster) multiplies network capacity infinitely without interference.
-              </p>
-            </div>
-          </div>
-
-          <!-- 5-Tier Cellular Architecture -->
-          <div class="space-y-3">
-            <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">5 Core Cellular Hardware Components</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
-              <div class="p-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block">1. MS</strong><span class="text-zinc-500">Mobile Station (handset, SIM)</span></div>
-              <div class="p-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block">2. BTS</strong><span class="text-zinc-500">Base Transceiver (cell tower RF)</span></div>
-              <div class="p-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block">3. BSC</strong><span class="text-zinc-500">Station Controller (channels)</span></div>
-              <div class="p-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block">4. MSC</strong><span class="text-zinc-500">Core Brain (routing, billing)</span></div>
-              <div class="p-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800"><strong class="font-mono text-zinc-900 dark:text-zinc-100 block">5. Backbone</strong><span class="text-zinc-500">Fiber/Microwave Links</span></div>
+          <!-- 6 NSS Components Grid -->
+          <div class="space-y-2">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-zinc-500">6 Components of Network Station Subsystem (NSS)</span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-sans">
+              <div class="ios-inset-card p-3 space-y-1">
+                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block">MSC</span>
+                <span class="text-zinc-500 text-[11px] block leading-tight">Switching, call routing, billing records (CDRs).</span>
+              </div>
+              <div class="ios-inset-card p-3 space-y-1">
+                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block">GMSC</span>
+                <span class="text-zinc-500 text-[11px] block leading-tight">Gateway to PSTN/ISDN and external networks.</span>
+              </div>
+              <div class="ios-inset-card p-3 space-y-1">
+                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block">HLR</span>
+                <span class="text-zinc-500 text-[11px] block leading-tight">Permanent master subscriber database & VLR pointer.</span>
+              </div>
+              <div class="ios-inset-card p-3 space-y-1">
+                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block">VLR</span>
+                <span class="text-zinc-500 text-[11px] block leading-tight">Temporary cache for active roaming users (allocates MSRN).</span>
+              </div>
+              <div class="ios-inset-card p-3 space-y-1">
+                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block">AuC</span>
+                <span class="text-zinc-500 text-[11px] block leading-tight">Stores secret key Ki; generates RAND, SRES, Kc triplets.</span>
+              </div>
+              <div class="ios-inset-card p-3 space-y-1">
+                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block">EIR</span>
+                <span class="text-zinc-500 text-[11px] block leading-tight">IMEI database: White (valid), Gray, Black (stolen).</span>
+              </div>
             </div>
           </div>
 
-          <!-- CALL TRACE SIMULATOR -->
-          <div id="mob-calltrace" class="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-4">
-            <div class="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-zinc-200 dark:border-zinc-800">
+          <!-- Interactive 8-Stage Call Flow Stepper (Apple HIG clean stepper) -->
+          <div class="ios-inset-card p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between">
               <div>
-                <span class="text-xs font-mono uppercase text-zinc-500 font-semibold">Interactive Workflow</span>
-                <h4 class="text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">Cellular Call Transmission Trace</h4>
+                <span class="text-[10px] font-mono text-zinc-400 block uppercase">Guide Question #9</span>
+                <h3 class="text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                  Call Transmission Sequence (8 Stages)
+                </h3>
               </div>
-              <div class="flex items-center gap-2">
-                <button onclick="MOBCOM_MODULE.stepCallTrace(-1)" class="px-3 py-1 rounded-lg border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-semibold">◀ Prev</button>
-                <span class="text-xs font-mono font-bold text-zinc-700 dark:text-zinc-300">Step ${state.currentCallStep + 1}/5</span>
-                <button onclick="MOBCOM_MODULE.stepCallTrace(1)" class="px-3 py-1 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-mono font-semibold">Next ▶</button>
+              <div class="flex items-center gap-1 font-mono text-xs">
+                <button
+                  onclick="MOBCOM_MODULE.stepCallTrace(-1)"
+                  class="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 touch-target"
+                >
+                  ‹
+                </button>
+                <span class="px-2 text-zinc-500 font-bold">${state.currentCallStep + 1}/8</span>
+                <button
+                  onclick="MOBCOM_MODULE.stepCallTrace(1)"
+                  class="w-8 h-8 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 touch-target"
+                >
+                  ›
+                </button>
               </div>
             </div>
 
-            <!-- Nodes Flow -->
-            <div class="grid grid-cols-5 gap-2 text-center text-xs">
-              ${["1. Sender MS", "2. BTS Tower", "3. BSC", "4. MSC Core", "5. Receiver MS"].map((title, idx) => {
-                const isActive = idx === state.currentCallStep;
-                const isPassed = idx < state.currentCallStep;
-                let cls = "bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500";
-                if (isActive) cls = "bg-zinc-900 dark:bg-zinc-100 border-zinc-900 dark:border-zinc-100 text-white dark:text-zinc-900 font-bold scale-105 shadow-sm";
-                else if (isPassed) cls = "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-300";
-
-                return `
-                  <div class="p-3 rounded-xl border transition-all ${cls}">
-                    <strong class="block text-[11px] font-mono">${title}</strong>
-                  </div>
-                `;
-              }).join('')}
+            <!-- Stepper Progress Dots -->
+            <div class="grid grid-cols-8 gap-1 py-1">
+              ${MOBCOM_DATA.callSteps.map((s, idx) => `
+                <div
+                  onclick="MOBCOM_MODULE.setCallStep(${idx})"
+                  class="h-1.5 rounded-full cursor-pointer transition-colors ${
+                    idx === state.currentCallStep
+                      ? 'bg-zinc-900 dark:bg-zinc-100'
+                      : idx < state.currentCallStep
+                      ? 'bg-zinc-400 dark:bg-zinc-600'
+                      : 'bg-zinc-200 dark:bg-zinc-800'
+                  }"
+                ></div>
+              `).join('')}
             </div>
 
-            <!-- Step Detail -->
-            <div class="p-4 rounded-xl bg-white dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 space-y-1 text-xs sm:text-sm">
-              <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 block">${callStep.title}</strong>
-              <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">${callStep.desc}</p>
+            <!-- Stage Card -->
+            <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-[10px] text-zinc-400 uppercase">Stage ${callStep.stage} • ${callStep.component}</span>
+              </div>
+              <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 block text-xs sm:text-sm">
+                ${callStep.title}
+              </strong>
+              <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed text-[11px] sm:text-xs">
+                ${callStep.desc}
+              </p>
             </div>
           </div>
+        </div>
 
-          <!-- 1G TO 5G MATRIX -->
-          <div id="mob-genmatrix" class="space-y-3">
-            <h4 class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">Cellular Evolution Matrix (1G ➔ 5G)</h4>
-            <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-zinc-100 dark:bg-zinc-800/60 font-mono text-[11px] uppercase tracking-wider text-zinc-700 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-800">
-                  <tr>
-                    <th class="py-2.5 px-3.5">Gen</th>
-                    <th class="py-2.5 px-3.5">Era</th>
-                    <th class="py-2.5 px-3.5">Tech</th>
-                    <th class="py-2.5 px-3.5">Primary Services</th>
-                    <th class="py-2.5 px-3.5">Key Innovation</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40"><td class="py-2.5 px-3.5 font-mono font-bold">1G</td><td class="py-2.5 px-3.5 text-zinc-500">1980s</td><td class="py-2.5 px-3.5">Analog FM</td><td class="py-2.5 px-3.5">Voice calls only</td><td class="py-2.5 px-3.5">First mobile phones</td></tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40"><td class="py-2.5 px-3.5 font-mono font-bold">2G</td><td class="py-2.5 px-3.5 text-zinc-500">1990s</td><td class="py-2.5 px-3.5">Digital GSM</td><td class="py-2.5 px-3.5">Voice + SMS text</td><td class="py-2.5 px-3.5">Digital encryption & SIM</td></tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40"><td class="py-2.5 px-3.5 font-mono font-bold">3G</td><td class="py-2.5 px-3.5 text-zinc-500">2000s</td><td class="py-2.5 px-3.5">WCDMA/UMTS</td><td class="py-2.5 px-3.5">Mobile broadband</td><td class="py-2.5 px-3.5">App stores & mobile web</td></tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40"><td class="py-2.5 px-3.5 font-mono font-bold">4G</td><td class="py-2.5 px-3.5 text-zinc-500">2010s</td><td class="py-2.5 px-3.5">All-IP LTE</td><td class="py-2.5 px-3.5">HD video, VoLTE</td><td class="py-2.5 px-3.5">Eliminated circuit-switching</td></tr>
-                  <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 font-semibold"><td class="py-2.5 px-3.5 font-mono font-bold text-emerald-600 dark:text-emerald-400">5G</td><td class="py-2.5 px-3.5 text-zinc-500">2020s+</td><td class="py-2.5 px-3.5">mmWave/Slicing</td><td class="py-2.5 px-3.5">Multi-Gbps, V2X, IoT</td><td class="py-2.5 px-3.5 text-emerald-600 dark:text-emerald-400">eMBB, mMTC, URLLC (&lt;1ms)</td></tr>
-                </tbody>
-              </table>
+        <!-- Section 4: Chapter 2 Module Lesson 1 Cellular Networks -->
+        <div class="space-y-4 pt-2">
+          <div class="pb-1 border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between">
+            <h2 class="text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
+              3. Cellular Wireless Networks (Chapter 2 Module)
+            </h2>
+            <span class="text-[10px] font-mono text-zinc-400">Lesson 1</span>
+          </div>
+
+          <div class="ios-inset-card p-4 space-y-3 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <strong class="font-mono text-zinc-900 dark:text-zinc-100 block text-xs">Why Divide into Cells?</strong>
+                <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px]">
+                  Enables <strong>Frequency Reuse</strong>: non-adjacent cells reuse identical radio channels, multiplying capacity to serve millions of users over limited licensed spectrum.
+                </p>
+              </div>
+              <div class="space-y-1">
+                <strong class="font-mono text-zinc-900 dark:text-zinc-100 block text-xs">Why Hexagons?</strong>
+                <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px]">
+                  Hexagons approximate a circular coverage radius while providing <strong>100% gapless surface tessellation with zero overlaps or dead zones</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] font-mono">
+              <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-800/40">
+                <strong class="block text-zinc-800 dark:text-zinc-200">MS</strong>
+                <span class="text-zinc-400">Handset & SIM</span>
+              </div>
+              <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-800/40">
+                <strong class="block text-zinc-800 dark:text-zinc-200">BTS</strong>
+                <span class="text-zinc-400">Cell Tower RF</span>
+              </div>
+              <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-800/40">
+                <strong class="block text-zinc-800 dark:text-zinc-200">BSC</strong>
+                <span class="text-zinc-400">Radio Channels</span>
+              </div>
+              <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-800/40">
+                <strong class="block text-zinc-800 dark:text-zinc-200">Handoff</strong>
+                <span class="text-zinc-400">Seamless Transfer</span>
+              </div>
             </div>
           </div>
         </div>
@@ -433,17 +457,28 @@ const MOBCOM_MODULE = (() => {
   }
 
   function stepCallTrace(delta) {
-    state.currentCallStep = (state.currentCallStep + delta + 5) % 5;
+    state.currentCallStep = (state.currentCallStep + delta + 8) % 8;
     UNIFIED_AUDIO.play("flip");
     const container = document.getElementById("main-content");
     if (container) renderView("cheatsheet", container);
   }
 
-  // --- 2. FLASHCARDS VIEW ---
+  function setCallStep(idx) {
+    state.currentCallStep = idx;
+    UNIFIED_AUDIO.play("flip");
+    const container = document.getElementById("main-content");
+    if (container) renderView("cheatsheet", container);
+  }
+
+  // =========================================================================
+  // --- 2. FLASHCARDS (TOUCH-FIRST & CLEAN CARDS) ---
+  // =========================================================================
   function filterFlashcards(cat) {
     state.selectedCategory = cat;
     if (cat === "all") {
       state.filteredCards = [...MOBCOM_DATA.flashcards];
+    } else if (cat === "midterm-all") {
+      state.filteredCards = MOBCOM_DATA.flashcards.filter(c => c.isMidterm);
     } else if (cat === "review") {
       state.filteredCards = MOBCOM_DATA.flashcards.filter(c => state.cardMastery[c.id] === false);
     } else {
@@ -460,100 +495,125 @@ const MOBCOM_MODULE = (() => {
     const masteredCount = MOBCOM_DATA.flashcards.filter(c => state.cardMastery[c.id] === true).length;
 
     container.innerHTML = `
-      <div class="space-y-6 max-w-2xl mx-auto animate-fade-in">
-        <!-- Filter Pills -->
-        <div class="flex items-center justify-between gap-2 flex-wrap pb-3 border-b border-zinc-200 dark:border-zinc-800">
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <button onclick="MOBCOM_MODULE.onFilterCards('all')" class="px-2.5 py-1 rounded text-xs font-medium ${state.selectedCategory === 'all' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">All (24)</button>
-            <button onclick="MOBCOM_MODULE.onFilterCards('mod1')" class="px-2.5 py-1 rounded text-xs font-medium ${state.selectedCategory === 'mod1' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Module 1</button>
-            <button onclick="MOBCOM_MODULE.onFilterCards('mod2')" class="px-2.5 py-1 rounded text-xs font-medium ${state.selectedCategory === 'mod2' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Module 2</button>
-            <button onclick="MOBCOM_MODULE.onFilterCards('mod3')" class="px-2.5 py-1 rounded text-xs font-medium ${state.selectedCategory === 'mod3' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Module 3</button>
+      <div class="space-y-4 max-w-lg mx-auto animate-fade-in pb-16 prose-container">
+        
+        <!-- Filter Bar (Touch-friendly horizontal scroll) -->
+        <div class="flex items-center justify-between gap-1 overflow-x-auto py-1 text-xs font-mono">
+          <div class="flex items-center gap-1">
+            <button
+              onclick="MOBCOM_MODULE.onFilterCards('midterm-all')"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-medium ${state.selectedCategory === 'midterm-all' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
+            >
+              Midterm (24)
+            </button>
+            <button
+              onclick="MOBCOM_MODULE.onFilterCards('midterm-lip')"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-medium ${state.selectedCategory === 'midterm-lip' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
+            >
+              Mobile IP
+            </button>
+            <button
+              onclick="MOBCOM_MODULE.onFilterCards('midterm-gsm')"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-medium ${state.selectedCategory === 'midterm-gsm' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
+            >
+              GSM
+            </button>
+            <button
+              onclick="MOBCOM_MODULE.onFilterCards('all')"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-medium ${state.selectedCategory === 'all' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
+            >
+              All (28)
+            </button>
           </div>
-          <button onclick="MOBCOM_MODULE.shuffleCards()" class="px-2.5 py-1 rounded text-xs font-mono font-semibold border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-            🔀 Shuffle
+          <button
+            onclick="MOBCOM_MODULE.shuffleCards()"
+            class="px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 text-xs shrink-0"
+          >
+            Shuffle
           </button>
         </div>
 
-        <!-- Progress Line -->
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between text-xs font-mono text-zinc-500">
+        <!-- Progress Counter Line -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between text-[11px] font-mono text-zinc-400">
             <span>Card ${currentNum} of ${total}</span>
-            <span>${masteredCount} / ${MOBCOM_DATA.flashcards.length} Mastered</span>
+            <span>${masteredCount} Mastered</span>
           </div>
-          <div class="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-            <div class="bg-zinc-900 dark:bg-zinc-100 h-full rounded-full transition-all duration-300" style="width: ${total > 0 ? (currentNum / total) * 100 : 0}%"></div>
+          <div class="w-full bg-zinc-200/80 dark:bg-zinc-800 h-1 rounded-full overflow-hidden">
+            <div class="bg-zinc-900 dark:bg-zinc-100 h-full rounded-full transition-all duration-200" style="width: ${total > 0 ? (currentNum / total) * 100 : 0}%"></div>
           </div>
         </div>
 
-        <!-- 3D Card Stage -->
+        <!-- Touch Flashcard Canvas -->
         ${card ? `
-          <div class="perspective-1000">
+          <div class="perspective-1000 select-none">
             <div
               id="mob-flashcard-flipper"
               onclick="MOBCOM_MODULE.toggleFlip()"
-              class="flashcard ${state.isCardFlipped ? 'flipped' : ''} cursor-pointer select-none"
-              style="min-height: 280px;"
+              class="flashcard ${state.isCardFlipped ? 'flipped' : ''} cursor-pointer min-h-[300px] sm:min-h-[320px]"
             >
-              <div class="flashcard-inner transform-style-3d relative w-full h-full" style="min-height: 280px;">
-                <!-- Front Face -->
-                <div class="flashcard-front backface-hidden absolute inset-0 p-6 sm:p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold">${card.categoryName}</span>
-                    <span class="text-xs font-mono text-zinc-400">Click or Space to flip</span>
+              <div class="flashcard-inner transform-style-3d relative w-full h-full min-h-[300px] sm:min-h-[320px]">
+                <!-- Front -->
+                <div class="flashcard-front backface-hidden absolute inset-0 p-6 rounded-2xl ios-inset-card flex flex-col justify-between shadow-sm">
+                  <div class="flex items-center justify-between text-[11px] font-mono text-zinc-400">
+                    <span>${card.categoryName}</span>
+                    <span>Tap to reveal</span>
                   </div>
-                  <div class="my-auto py-4 text-center">
-                    <h3 class="text-lg sm:text-xl font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
+                  <div class="my-auto py-2 text-center">
+                    <h3 class="text-base sm:text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
                       ${card.front}
                     </h3>
                   </div>
-                  <div class="text-center text-[11px] font-mono text-zinc-500">
-                    Press Space to view answer
+                  <div class="text-center text-[10px] font-mono text-zinc-400">
+                    Question
                   </div>
                 </div>
 
-                <!-- Back Face -->
-                <div class="flashcard-back backface-hidden rotate-y-180 absolute inset-0 p-6 sm:p-8 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 shadow-sm flex flex-col justify-between">
-                  <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-zinc-800 dark:bg-zinc-200 text-zinc-300 dark:text-zinc-700 font-semibold">${card.categoryName}</span>
-                    <span class="text-xs font-mono opacity-60">Answer</span>
+                <!-- Back -->
+                <div class="flashcard-back backface-hidden rotate-y-180 absolute inset-0 p-6 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 flex flex-col justify-between shadow-lg">
+                  <div class="flex items-center justify-between text-[11px] font-mono opacity-60">
+                    <span>${card.categoryName}</span>
+                    <span>Answer</span>
                   </div>
-                  <div class="my-auto py-4">
-                    <p class="text-sm sm:text-base leading-relaxed text-zinc-200 dark:text-zinc-800">
+                  <div class="my-auto py-2">
+                    <p class="text-xs sm:text-sm leading-relaxed text-zinc-200 dark:text-zinc-800">
                       ${card.back}
                     </p>
                   </div>
-                  <div class="text-center text-[11px] font-mono opacity-60">
-                    💡 Mnemonic: ${card.mnemonic}
+                  <div class="text-center text-[10px] font-mono opacity-60">
+                    ${card.mnemonic ? 'Mnemonic: ' + card.mnemonic : ''}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         ` : `
-          <div class="p-12 text-center text-zinc-500">No cards in this filter.</div>
+          <div class="p-8 text-center text-zinc-400 text-xs">No cards found.</div>
         `}
 
-        <!-- Bottom Controls -->
-        <div class="flex items-center justify-between gap-3 pt-2">
-          <button onclick="MOBCOM_MODULE.prevCard()" class="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-            ◀ Prev
+        <!-- Touch Action Buttons (High-contrast 44pt targets) -->
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button
+            onclick="MOBCOM_MODULE.markCard(false)"
+            class="touch-target py-2.5 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 active:scale-98 transition-all"
+          >
+            Still Learning
           </button>
-          <div class="flex items-center gap-2">
-            <button onclick="MOBCOM_MODULE.markCard(false)" class="px-3.5 py-2.5 rounded-xl text-xs font-medium border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition-colors">
-              ⟳ Still Learning
-            </button>
-            <button onclick="MOBCOM_MODULE.markCard(true)" class="px-3.5 py-2.5 rounded-xl text-xs font-medium border border-emerald-300 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">
-              ★ Mastered
-            </button>
-          </div>
-          <button onclick="MOBCOM_MODULE.nextCard()" class="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-            Next ▶
+          <button
+            onclick="MOBCOM_MODULE.markCard(true)"
+            class="touch-target py-2.5 px-4 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-semibold hover:opacity-90 active:scale-98 transition-all"
+          >
+            Mark Mastered
           </button>
         </div>
 
-        <div class="text-center text-[11px] font-mono text-zinc-400">
-          Hotkeys: <kbd class="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800">Space</kbd> Flip • <kbd class="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800">←</kbd> <kbd class="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800">→</kbd> Nav • <kbd class="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800">1</kbd> Learning • <kbd class="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800">2</kbd> Mastered
+        <!-- Nav Stepper -->
+        <div class="flex items-center justify-between text-xs font-mono text-zinc-400 pt-1">
+          <button onclick="MOBCOM_MODULE.prevCard()" class="px-3 py-1.5 touch-target flex items-center">‹ Prev Card</button>
+          <span>Swipe or Space to flip</span>
+          <button onclick="MOBCOM_MODULE.nextCard()" class="px-3 py-1.5 touch-target flex items-center">Next Card ›</button>
         </div>
+
       </div>
     `;
   }
@@ -616,116 +676,303 @@ const MOBCOM_MODULE = (() => {
     nextCard();
   }
 
-  // --- 3. MOCK EXAM VIEW ---
+  // =========================================================================
+  // --- 3. MOCK EXAM (MINIMAL CERTIFICATION ENGINE) ---
+  // =========================================================================
   function renderQuiz(container) {
-    const q = MOBCOM_DATA.quizQuestions[state.currentQuizIndex];
+    updateActiveQuizQuestions();
+    const qList = state.activeQuizQuestions;
+    const q = qList[state.currentQuizIndex] || qList[0];
     const isAnswered = state.quizAnswers[state.currentQuizIndex] !== undefined;
     const selectedOpt = state.quizAnswers[state.currentQuizIndex];
 
     let correctCount = 0;
-    Object.keys(state.quizAnswers).forEach(idx => {
-      if (state.quizAnswers[idx] === MOBCOM_DATA.quizQuestions[idx].correct) correctCount++;
+    qList.forEach((item, idx) => {
+      if (state.quizAnswers[idx] === item.correct) correctCount++;
     });
 
+    const answeredCount = Object.keys(state.quizAnswers).filter(k => parseInt(k) < qList.length).length;
+    const isExamComplete = answeredCount === qList.length && qList.length > 0;
+    const missedQuestions = qList.filter((item, idx) => state.quizAnswers[idx] !== undefined && state.quizAnswers[idx] !== item.correct);
+    const missedCount = missedQuestions.length;
+    const scorePct = Math.round((correctCount / Math.max(1, qList.length)) * 100);
+
     container.innerHTML = `
-      <div class="max-w-2xl mx-auto space-y-6 animate-fade-in">
-        <!-- Top Bar -->
-        <div class="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-mono px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">${q.category}</span>
-            <span class="text-xs font-mono text-zinc-500">Item ${state.currentQuizIndex + 1} of ${MOBCOM_DATA.quizQuestions.length}</span>
+      <div class="space-y-4 max-w-lg mx-auto animate-fade-in pb-16 prose-container">
+        
+        <!-- Exam Mode & Score Header -->
+        <div class="flex items-center justify-between pb-2 border-b border-zinc-200/80 dark:border-zinc-800/80 text-xs font-mono">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="font-bold text-zinc-900 dark:text-zinc-100">Item ${state.currentQuizIndex + 1} of ${qList.length}</span>
+            <span class="text-zinc-400">•</span>
+            <span class="text-zinc-500">${q.category}</span>
+            ${state.isShuffled ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-medium">Shuffled</span>' : ''}
           </div>
-          <div class="flex items-center gap-3">
-            <span class="text-xs font-mono text-zinc-500">Score: <strong class="text-zinc-900 dark:text-zinc-100 font-bold">${correctCount} / ${MOBCOM_DATA.quizQuestions.length}</strong></span>
-            <button onclick="MOBCOM_MODULE.restartQuiz()" class="px-2 py-1 rounded text-xs font-mono border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              Restart
+          <div class="flex items-center gap-2">
+            <span class="text-zinc-500">Score: <strong>${correctCount}/${qList.length}</strong></span>
+            <button
+              onclick="MOBCOM_MODULE.restartQuiz('all')"
+              title="Shuffle and retry questions"
+              class="text-[11px] text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 underline underline-offset-2 flex items-center gap-1 touch-target"
+            >
+              Shuffle
             </button>
           </div>
         </div>
 
+        <!-- Exam Completion Banner (When all items answered) -->
+        ${isExamComplete ? `
+          <div class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-850 space-y-3 animate-fade-in">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-400 block">Exam Complete</span>
+                <span class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 font-serif">Score: ${correctCount}/${qList.length} (${scorePct}%)</span>
+              </div>
+              <span class="text-xs font-mono font-medium ${scorePct >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}">
+                ${scorePct >= 80 ? 'Mastery Achieved' : 'Review Recommended'}
+              </span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-sans">
+              <button
+                onclick="MOBCOM_MODULE.restartQuiz('all')"
+                class="px-3.5 py-2.5 rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-semibold flex items-center justify-center gap-2 hover:opacity-90 touch-target"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Retry All (Shuffled)
+              </button>
+              <button
+                onclick="MOBCOM_MODULE.restartQuiz('missed')"
+                ${missedCount === 0 ? 'disabled' : ''}
+                class="px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 text-xs font-semibold flex items-center justify-center gap-2 hover:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed touch-target"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                ${missedCount > 0 ? `Drill Missed Only (${missedCount})` : 'None Missed (100%)'}
+              </button>
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Question Body -->
-        <div class="space-y-4">
-          <h3 class="text-base sm:text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
+        <div class="space-y-3 pt-1">
+          <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
             ${q.question}
           </h3>
 
-          <!-- Options -->
-          <div class="space-y-2.5">
+          <!-- Options Stack (44pt touch targets) -->
+          <div class="space-y-2 pt-1">
             ${q.options.map((opt, idx) => {
               const letter = String.fromCharCode(65 + idx);
               const isCorrect = idx === q.correct;
               const isSelected = selectedOpt === idx;
 
-              let btnStyle = "bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 text-zinc-800 dark:text-zinc-200";
-
+              let btnStyle = "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:border-zinc-400";
               if (isAnswered) {
                 if (isCorrect) {
-                  btnStyle = "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-200";
+                  btnStyle = "border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold";
                 } else if (isSelected && !isCorrect) {
-                  btnStyle = "bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-800 dark:text-rose-200";
+                  btnStyle = "border-rose-400 bg-rose-50/50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300";
                 }
               }
 
               return `
                 <button
                   onclick="MOBCOM_MODULE.selectQuizAnswer(${idx})"
-                  class="w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm font-medium transition-all flex items-start gap-3 ${btnStyle}"
+                  class="w-full text-left p-3.5 rounded-xl border text-xs leading-relaxed transition-all flex items-start gap-3 touch-target ${btnStyle}"
                 >
-                  <span class="w-6 h-6 rounded-lg font-mono text-xs flex items-center justify-center flex-shrink-0 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">${letter}</span>
-                  <span class="flex-1 leading-relaxed">${opt}</span>
-                  ${isAnswered && isCorrect ? '<span class="text-emerald-600 dark:text-emerald-400 font-bold ml-2 text-xs">✓ Correct</span>' : ''}
-                  ${isAnswered && isSelected && !isCorrect ? '<span class="text-rose-600 dark:text-rose-400 font-bold ml-2 text-xs">✗ Choice</span>' : ''}
+                  <span class="font-mono text-zinc-400 font-bold shrink-0">${letter}.</span>
+                  <span class="flex-1">${opt}</span>
                 </button>
               `;
             }).join('')}
           </div>
 
-          <!-- Rationale -->
+          <!-- Think-First Cooldown Hint Zone (Shown when unanswered) -->
+          ${!isAnswered ? `
+            <div id="quiz-hint-zone" class="pt-1"></div>
+          ` : ''}
+
+          <!-- Concept Analysis (Shown once answered) -->
           ${isAnswered ? `
-            <div class="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5 text-xs animate-fade-in">
-              <strong class="font-mono text-zinc-900 dark:text-zinc-100 block font-semibold">💡 Explanation</strong>
-              <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">${q.explanation}</p>
+            <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-850 border border-zinc-200/80 dark:border-zinc-800 text-xs space-y-1 animate-fade-in">
+              <span class="font-mono text-[10px] uppercase text-zinc-400 block font-bold">Concept Analysis</span>
+              <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed text-[11px] sm:text-xs font-sans">${q.explanation}</p>
             </div>
           ` : ''}
         </div>
 
-        <!-- 20-Cell Jump Grid -->
-        <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
-          <div class="flex items-center justify-between">
-            <button onclick="MOBCOM_MODULE.navQuiz(-1)" ${state.currentQuizIndex === 0 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-xs font-medium disabled:opacity-40">
-              ◀ Prev
-            </button>
-            <div class="flex items-center gap-1.5 flex-wrap justify-center max-w-sm">
-              ${MOBCOM_DATA.quizQuestions.map((item, idx) => {
-                const ans = state.quizAnswers[idx];
-                const isCurr = idx === state.currentQuizIndex;
-                let bg = "bg-zinc-200 dark:bg-zinc-800 text-zinc-500";
-                if (ans !== undefined) {
-                  bg = ans === item.correct ? "bg-emerald-600 text-white" : "bg-rose-600 text-white";
-                }
-                if (isCurr) bg += " ring-2 ring-zinc-500";
+        <!-- Compact Navigation & Jump Bar -->
+        <div class="pt-2 flex items-center justify-between text-xs font-mono">
+          <button
+            onclick="MOBCOM_MODULE.navQuiz(-1)"
+            ${state.currentQuizIndex === 0 ? 'disabled' : ''}
+            class="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 disabled:opacity-30 touch-target"
+          >
+            ‹ Prev
+          </button>
+          
+          <div class="flex items-center gap-1 overflow-x-auto max-w-[180px] py-1">
+            ${qList.map((item, idx) => {
+              const ans = state.quizAnswers[idx];
+              const isCurr = idx === state.currentQuizIndex;
+              let bg = "bg-zinc-100 dark:bg-zinc-800 text-zinc-400";
+              if (ans !== undefined) {
+                bg = ans === item.correct ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold" : "bg-rose-200 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200";
+              }
+              if (isCurr) bg += " ring-1 ring-zinc-500";
 
-                return `
-                  <button onclick="MOBCOM_MODULE.jumpQuiz(${idx})" class="w-6 h-6 rounded text-[11px] font-mono font-bold flex items-center justify-center ${bg}">
-                    ${idx + 1}
-                  </button>
-                `;
-              }).join('')}
-            </div>
-            <button onclick="MOBCOM_MODULE.navQuiz(1)" ${state.currentQuizIndex === MOBCOM_DATA.quizQuestions.length - 1 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-xs font-medium disabled:opacity-40">
-              Next ▶
-            </button>
+              return `
+                <button
+                  onclick="MOBCOM_MODULE.jumpQuiz(${idx})"
+                  class="w-5 h-5 rounded text-[10px] font-mono flex items-center justify-center shrink-0 ${bg}"
+                >
+                  ${idx + 1}
+                </button>
+              `;
+            }).join('')}
           </div>
+
+          <button
+            onclick="MOBCOM_MODULE.navQuiz(1)"
+            ${state.currentQuizIndex === qList.length - 1 ? 'disabled' : ''}
+            class="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 disabled:opacity-30 touch-target"
+          >
+            Next ›
+          </button>
+        </div>
+
+      </div>
+    `;
+
+    // Start 10s Think-First cooldown timer if unanswered
+    if (!isAnswered) {
+      startHintCooldown();
+    } else {
+      cleanupHintTimer();
+    }
+  }
+
+  function startHintCooldown() {
+    cleanupHintTimer();
+    const zone = document.getElementById("quiz-hint-zone");
+    if (!zone) return;
+
+    zone.innerHTML = `
+      <div class="think-cooldown-bar">
+        <div id="think-cooldown-fill" class="think-cooldown-fill" style="width: 0%;"></div>
+        <div id="think-cooldown-label" class="think-cooldown-label">
+          <svg class="w-3.5 h-3.5 text-zinc-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Think first... 10s</span>
         </div>
       </div>
     `;
+
+    const startTime = Date.now();
+    const duration = 10000;
+
+    state.hintTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, (elapsed / duration) * 100);
+      const secLeft = Math.max(0, Math.ceil((duration - elapsed) / 1000));
+      const fillEl = document.getElementById("think-cooldown-fill");
+      const labelEl = document.getElementById("think-cooldown-label");
+
+      if (fillEl) fillEl.style.width = pct + "%";
+      if (labelEl && elapsed < duration) {
+        labelEl.innerHTML = `
+          <svg class="w-3.5 h-3.5 text-zinc-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Think first... ${secLeft}s</span>
+        `;
+      }
+
+      if (elapsed >= duration) {
+        cleanupHintTimer();
+        const currentZone = document.getElementById("quiz-hint-zone");
+        if (currentZone) {
+          currentZone.innerHTML = `
+            <button
+              onclick="MOBCOM_MODULE.revealHint()"
+              class="hint-pill-btn"
+              title="Unlock conceptual clue"
+            >
+              <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              <span>Show Hint</span>
+            </button>
+          `;
+        }
+      }
+    }, 100);
+  }
+
+  function revealHint() {
+    const q = state.activeQuizQuestions[state.currentQuizIndex];
+    if (!q || !q.hint) return;
+    const zone = document.getElementById("quiz-hint-zone");
+    if (zone) {
+      zone.innerHTML = `
+        <div class="hint-clue-card space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-400">Conceptual Clue</span>
+            <span class="font-mono text-[10px] text-zinc-400">Think-First Clue</span>
+          </div>
+          <p class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans">${q.hint}</p>
+        </div>
+      `;
+      UNIFIED_AUDIO.play("flip");
+    }
+  }
+
+  function restartQuiz(mode = "all") {
+    cleanupHintTimer();
+    if (mode === "missed") {
+      const missed = state.activeQuizQuestions.filter((item, idx) => {
+        return state.quizAnswers[idx] !== undefined && state.quizAnswers[idx] !== item.correct;
+      });
+      if (missed.length === 0) return;
+      state.activeQuizQuestions = shuffleArray(missed);
+    } else {
+      const baseQuestions = state.selectedQuizMode === "midterm"
+        ? MOBCOM_DATA.quizQuestions.filter(q => q.isMidterm)
+        : [...MOBCOM_DATA.quizQuestions];
+      state.activeQuizQuestions = shuffleArray(baseQuestions);
+    }
+    state.quizAnswers = {};
+    state.currentQuizIndex = 0;
+    state.isShuffled = true;
+    saveModuleState();
+    UNIFIED_AUDIO.play("flip");
+    const container = document.getElementById("main-content");
+    if (container) renderView("quiz", container);
+  }
+
+  function setQuizMode(mode) {
+    if (state.selectedQuizMode !== mode) {
+      cleanupHintTimer();
+      state.selectedQuizMode = mode;
+      state.quizAnswers = {};
+      state.currentQuizIndex = 0;
+      updateActiveQuizQuestions(true);
+      saveModuleState();
+      const container = document.getElementById("main-content");
+      if (container) renderView("quiz", container);
+    }
   }
 
   function selectQuizAnswer(optIdx) {
     if (state.quizAnswers[state.currentQuizIndex] !== undefined) return;
+    cleanupHintTimer();
     state.quizAnswers[state.currentQuizIndex] = optIdx;
 
-    const q = MOBCOM_DATA.quizQuestions[state.currentQuizIndex];
+    const q = state.activeQuizQuestions[state.currentQuizIndex];
     if (optIdx === q.correct) {
       UNIFIED_AUDIO.play("correct");
     } else {
@@ -734,14 +981,13 @@ const MOBCOM_MODULE = (() => {
 
     saveModuleState();
 
-    // Check completion
-    const answeredCount = Object.keys(state.quizAnswers).length;
-    if (answeredCount === MOBCOM_DATA.quizQuestions.length) {
+    const answeredCount = Object.keys(state.quizAnswers).filter(k => parseInt(k) < state.activeQuizQuestions.length).length;
+    if (answeredCount === state.activeQuizQuestions.length) {
       let correct = 0;
-      Object.keys(state.quizAnswers).forEach(i => {
-        if (state.quizAnswers[i] === MOBCOM_DATA.quizQuestions[i].correct) correct++;
+      state.activeQuizQuestions.forEach((item, idx) => {
+        if (state.quizAnswers[idx] === item.correct) correct++;
       });
-      const pct = Math.round((correct / MOBCOM_DATA.quizQuestions.length) * 100);
+      const pct = Math.round((correct / state.activeQuizQuestions.length) * 100);
       if (pct > state.bestScore) state.bestScore = pct;
       saveModuleState();
 
@@ -756,96 +1002,89 @@ const MOBCOM_MODULE = (() => {
   }
 
   function navQuiz(delta) {
-    state.currentQuizIndex = Math.max(0, Math.min(MOBCOM_DATA.quizQuestions.length - 1, state.currentQuizIndex + delta));
+    cleanupHintTimer();
+    state.currentQuizIndex = Math.max(0, Math.min(state.activeQuizQuestions.length - 1, state.currentQuizIndex + delta));
     const container = document.getElementById("main-content");
     if (container) renderView("quiz", container);
     UNIFIED_AUDIO.play("flip");
   }
 
   function jumpQuiz(idx) {
+    cleanupHintTimer();
     state.currentQuizIndex = idx;
     const container = document.getElementById("main-content");
     if (container) renderView("quiz", container);
     UNIFIED_AUDIO.play("flip");
   }
 
-  function restartQuiz() {
-    if (confirm("Reset all quiz answers?")) {
-      state.quizAnswers = {};
-      state.currentQuizIndex = 0;
-      saveModuleState();
-      const container = document.getElementById("main-content");
-      if (container) renderView("quiz", container);
-    }
-  }
-
-  // --- 4. GUIDE QUESTIONS VIEW ---
+  // =========================================================================
+  // --- 4. GUIDE QUESTIONS (CLEAN ACCORDIONS) ---
+  // =========================================================================
   function renderGuideQuestions(container) {
-    const reviewedCount = Object.values(state.guideReviewed).filter(v => v === true).length;
+    const guideList = MOBCOM_DATA.guideQuestions.filter(g => g.isMidterm);
+    const reviewedCount = guideList.filter(g => state.guideReviewed[g.num] === true).length;
 
     container.innerHTML = `
-      <div class="space-y-6 animate-fade-in max-w-3xl mx-auto">
-        <div class="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800">
-          <div>
-            <span class="text-xs font-mono uppercase text-zinc-500 font-semibold">Official Syllabus Pointers</span>
-            <h2 class="text-xl sm:text-2xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
-              12 Prelim Guide Questions Solved
-            </h2>
+      <div class="space-y-4 max-w-lg mx-auto animate-fade-in pb-16 prose-container">
+        
+        <!-- Header -->
+        <div class="space-y-1 pb-3 border-b border-zinc-200/80 dark:border-zinc-800/80">
+          <div class="flex items-center justify-between text-xs font-mono text-zinc-400">
+            <span>Official Guide Questions</span>
+            <span>${reviewedCount} / ${guideList.length} Checked</span>
           </div>
-          <span class="text-xs font-mono px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">
-            ${reviewedCount} / ${MOBCOM_DATA.guideQuestions.length} Reviewed
-          </span>
+          <h2 class="text-base sm:text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100">
+            Midterm Examination Answers
+          </h2>
         </div>
 
-        <div class="space-y-4">
-          ${MOBCOM_DATA.guideQuestions.map(item => {
+        <!-- Q&A Stack -->
+        <div class="space-y-3">
+          ${guideList.map(item => {
             const isDone = state.guideReviewed[item.num] === true;
 
             return `
-              <div class="p-5 sm:p-6 rounded-2xl border ${isDone ? 'border-emerald-300 dark:border-emerald-950 bg-emerald-50/30 dark:bg-emerald-950/20' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60'} space-y-3.5 transition-all">
-                <div class="flex items-start justify-between gap-3 pb-2 border-b border-zinc-200 dark:border-zinc-800">
-                  <div class="flex items-start gap-2.5">
-                    <span class="w-7 h-7 rounded-lg font-mono text-xs font-bold flex items-center justify-center flex-shrink-0 ${isDone ? 'bg-emerald-600 text-white' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'}">
-                      Q${item.num}
-                    </span>
-                    <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
+              <div class="ios-inset-card p-4 space-y-2.5 transition-all ${isDone ? 'opacity-75' : ''}">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="space-y-0.5">
+                    <span class="font-mono text-[10px] text-zinc-400 uppercase font-semibold">Question ${item.num}</span>
+                    <h3 class="text-xs sm:text-sm font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
                       ${item.question}
                     </h3>
                   </div>
-                  <label class="flex items-center gap-1.5 cursor-pointer select-none px-2.5 py-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex-shrink-0">
+                  <label class="flex items-center gap-1.5 cursor-pointer touch-target shrink-0">
                     <input
                       type="checkbox"
                       onchange="MOBCOM_MODULE.toggleGuideReview(${item.num}, this.checked)"
                       ${isDone ? 'checked' : ''}
-                      class="rounded text-emerald-600 focus:ring-emerald-500"
+                      class="rounded text-zinc-900 focus:ring-0"
                     />
-                    <span class="text-[11px] font-mono font-semibold ${isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500'}">Reviewed</span>
+                    <span class="text-[10px] font-mono ${isDone ? 'text-zinc-900 dark:text-zinc-100 font-bold' : 'text-zinc-400'}">Done</span>
                   </label>
                 </div>
 
-                <div class="space-y-3 text-xs">
-                  <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-                    <span class="text-[10px] font-mono uppercase text-zinc-500 font-bold block mb-1">🎯 Direct Answer Summary</span>
-                    <p class="text-zinc-700 dark:text-zinc-300 leading-relaxed">${item.directAnswer}</p>
+                <div class="space-y-2 text-xs">
+                  <div class="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 leading-relaxed text-zinc-700 dark:text-zinc-300 text-[11px] sm:text-xs">
+                    ${item.directAnswer}
                   </div>
 
-                  <div class="space-y-1.5 pl-1">
-                    <span class="text-[10px] font-mono uppercase text-zinc-500 font-bold block">📌 Deep-Dive Details & Mechanisms</span>
-                    <ul class="space-y-1 text-zinc-600 dark:text-zinc-300">
-                      ${item.details.map(d => `<li class="flex items-start gap-2"><span class="text-zinc-400 mt-0.5">•</span><span>${d}</span></li>`).join('')}
-                    </ul>
-                  </div>
-
-                  <div class="pt-2 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500">
-                    <span>💡 <strong>Exam Tip:</strong> ${item.examTip}</span>
+                  <div class="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                    Tip: ${item.examTip}
                   </div>
                 </div>
               </div>
             `;
           }).join('')}
         </div>
+
       </div>
     `;
+  }
+
+  function filterGuide(cat) {
+    state.selectedGuideCategory = cat;
+    const container = document.getElementById("main-content");
+    if (container) renderView("guide", container);
   }
 
   function toggleGuideReview(num, checked) {
@@ -856,81 +1095,30 @@ const MOBCOM_MODULE = (() => {
     if (container) renderView("guide", container);
   }
 
-  // --- 5. GLOSSARY VIEW ---
-  function renderGlossary(container) {
-    const filtered = state.selectedGlossaryCat === "all"
-      ? MOBCOM_DATA.glossary
-      : MOBCOM_DATA.glossary.filter(g => g.cat === state.selectedGlossaryCat);
-
-    container.innerHTML = `
-      <div class="space-y-6 animate-fade-in max-w-3xl mx-auto">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
-          <div>
-            <span class="text-xs font-mono uppercase text-zinc-500 font-semibold">Technical Terminology</span>
-            <h2 class="text-xl sm:text-2xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
-              Acronyms & Glossary Fast Lookup
-            </h2>
-          </div>
-          <div class="flex items-center gap-1.5 flex-wrap">
-            ${["all", "Hardware", "Cellular", "Media", "General"].map(cat => `
-              <button
-                onclick="MOBCOM_MODULE.filterGlossary('${cat}')"
-                class="px-2.5 py-1 rounded text-xs font-medium ${state.selectedGlossaryCat === cat ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}"
-              >
-                ${cat === 'all' ? 'All (20)' : cat}
-              </button>
-            `).join('')}
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          ${filtered.map(item => `
-            <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
-              <div class="flex items-center justify-between">
-                <span class="font-mono font-bold text-sm text-zinc-900 dark:text-zinc-100">${item.term}</span>
-                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">${item.cat}</span>
-              </div>
-              <strong class="text-xs font-medium text-zinc-700 dark:text-zinc-300 block">${item.full}</strong>
-              <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">${item.desc}</p>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  function filterGlossary(cat) {
-    state.selectedGlossaryCat = cat;
-    const container = document.getElementById("main-content");
-    if (container) renderView("glossary", container);
-  }
-
   return {
     id: "mobcom",
-    tabs: [
-      { id: "cheatsheet", name: "Cheat Sheets" },
-      { id: "flashcards", name: "Flashcards" },
-      { id: "quiz", name: "Mock Exam" },
-      { id: "guide", name: "Guide Questions" },
-      { id: "glossary", name: "Glossary" }
-    ],
     state,
     init,
     renderView,
     calculateReadiness,
-    stepCallTrace,
+    filterFlashcards,
     onFilterCards,
     shuffleCards,
     toggleFlip,
     nextCard,
     prevCard,
     markCard,
+    setQuizMode,
     selectQuizAnswer,
     navQuiz,
     jumpQuiz,
     restartQuiz,
+    revealHint,
+    cleanupHintTimer,
+    filterGuide,
     toggleGuideReview,
-    filterGlossary
+    stepCallTrace,
+    setCallStep
   };
 })();
 

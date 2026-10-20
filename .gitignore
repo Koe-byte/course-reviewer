@@ -1,0 +1,7 @@
+# Knowledge Graph & Local caches
+graphify-out/
+
+# OS / Editor artifacts
+.DS_Store
+Thumbs.db
+*.tmp

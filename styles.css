@@ -345,3 +345,228 @@ body {
     margin-bottom: 12px !important;
   }
 }
+
+/* ==========================================
+   APPLE HIG & MINIMAL SAAS MOBILE-FIRST STYLES
+   ========================================== */
+
+/* Touch Target Minimum & iOS Smooth Scrolling */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* iOS Grouped Inset Card Pattern */
+.ios-inset-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(228, 228, 231, 0.8);
+  border-radius: 1rem;
+}
+
+.dark .ios-inset-card {
+  background-color: rgba(24, 24, 27, 0.6);
+  border-color: rgba(39, 39, 42, 0.8);
+}
+
+/* Sidebar Drawer Overlay */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(9, 9, 11, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 45;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Bottom Segmented Dock for Mobile */
+.bottom-segmented-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background-color: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid rgba(228, 228, 231, 0.8);
+  padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.dark .bottom-segmented-dock {
+  background-color: rgba(18, 18, 20, 0.88);
+  border-top-color: rgba(39, 39, 42, 0.8);
+}
+
+/* Segmented Control Pill Item */
+.dock-segment-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.65rem;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #71717a;
+  transition: all 0.15s ease;
+  min-height: 40px;
+}
+
+.dock-segment-btn.active {
+  color: #09090b;
+  background-color: #f4f4f5;
+  font-weight: 600;
+}
+
+.dark .dock-segment-btn.active {
+  color: #f4f4f5;
+  background-color: #27272a;
+}
+
+/* Tree Item Accordion Chevron */
+.tree-chevron {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tree-open .tree-chevron {
+  transform: rotate(90deg);
+}
+
+/* Content Measure on Mobile & Large Screens */
+.prose-container {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Quiet Monospace Indicator */
+.quiet-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  background-color: #f4f4f5;
+  color: #52525b;
+}
+
+.dark .quiet-chip {
+  background-color: #27272a;
+  color: #a1a1aa;
+}
+
+/* ==========================================
+   MOCK EXAM: THINK-FIRST COOLDOWN & SHUFFLE
+   ========================================== */
+.think-cooldown-bar {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid #e4e4e7;
+  background-color: #fafafa;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: border-color 0.2s ease;
+}
+
+.dark .think-cooldown-bar {
+  border-color: #27272a;
+  background-color: #18181b;
+}
+
+.think-cooldown-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  background-color: #e4e4e7;
+  transition: width 0.25s linear;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dark .think-cooldown-fill {
+  background-color: #27272a;
+}
+
+.think-cooldown-label {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #71717a;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  pointer-events: none;
+}
+
+.dark .think-cooldown-label {
+  color: #a1a1aa;
+}
+
+.hint-pill-btn {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 0.75rem;
+  border: 1px solid #d4d4d8;
+  background-color: #ffffff;
+  color: #18181b;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.hint-pill-btn:hover {
+  border-color: #18181b;
+  background-color: #f4f4f5;
+}
+
+.dark .hint-pill-btn {
+  border-color: #3f3f46;
+  background-color: #18181b;
+  color: #f4f4f5;
+}
+
+.dark .hint-pill-btn:hover {
+  border-color: #f4f4f5;
+  background-color: #27272a;
+}
+
+.hint-clue-card {
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e4e4e7;
+  background-color: #fbfbfb;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.dark .hint-clue-card {
+  border-color: #27272a;
+  background-color: #18181b;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+

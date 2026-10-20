@@ -1,7 +1,6 @@
 /**
  * UNIFIED REVIEWER — CORE APPLICATION CONTROLLER & ROUTER
- * Handles multi-course routing, procedural audio synthesis, theme toggling,
- * keyboard accessibility, and centralized state orchestration.
+ * Apple HIG Mobile Ergonomics & Minimalist SaaS Architecture
  */
 
 // ==========================================
@@ -27,24 +26,21 @@ const UNIFIED_AUDIO = (() => {
     try {
       const ctx = getContext();
       if (!ctx) return;
-
       const now = ctx.currentTime;
 
       if (type === "flip") {
-        // Soft tactile card flip sweep
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "sine";
         osc.frequency.setValueAtTime(320, now);
-        osc.frequency.exponentialRampToValueAtTime(580, now + 0.06);
-        gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.frequency.exponentialRampToValueAtTime(540, now + 0.05);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.06);
+        osc.stop(now + 0.05);
       } else if (type === "correct") {
-        // Ascending 2-tone melodic chime (E5 -> B5)
         const notes = [659.25, 987.77];
         notes.forEach((freq, idx) => {
           const osc = ctx.createOscillator();
@@ -52,41 +48,39 @@ const UNIFIED_AUDIO = (() => {
           const noteTime = now + (idx * 0.08);
           osc.type = "sine";
           osc.frequency.setValueAtTime(freq, noteTime);
-          gain.gain.setValueAtTime(0.12, noteTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.18);
+          gain.gain.setValueAtTime(0.09, noteTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.16);
           osc.connect(gain);
           gain.connect(ctx.destination);
           osc.start(noteTime);
-          osc.stop(noteTime + 0.18);
+          osc.stop(noteTime + 0.16);
         });
       } else if (type === "wrong") {
-        // Low tactile buzz drop
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(180, now);
-        osc.frequency.exponentialRampToValueAtTime(110, now + 0.16);
-        gain.gain.setValueAtTime(0.1, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc.frequency.setValueAtTime(170, now);
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.14);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now);
-        osc.stop(now + 0.16);
+        osc.stop(now + 0.14);
       } else if (type === "celebrate") {
-        // 4-tone triumphant arpeggio (C5 -> E5 -> G5 -> C6)
         const notes = [523.25, 659.25, 783.99, 1046.50];
         notes.forEach((freq, idx) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          const noteTime = now + (idx * 0.09);
+          const noteTime = now + (idx * 0.08);
           osc.type = "triangle";
           osc.frequency.setValueAtTime(freq, noteTime);
-          gain.gain.setValueAtTime(0.15, noteTime);
-          gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.35);
+          gain.gain.setValueAtTime(0.12, noteTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.3);
           osc.connect(gain);
           gain.connect(ctx.destination);
           osc.start(noteTime);
-          osc.stop(noteTime + 0.35);
+          osc.stop(noteTime + 0.3);
         });
       }
     } catch (e) {
@@ -117,28 +111,28 @@ function triggerConfetti() {
   const ctx = canvas.getContext("2d");
 
   const particles = [];
-  const colors = ["#09090b", "#71717a", "#e4e4e7", "#10b981", "#3b82f6", "#f59e0b", "#ec4899"];
+  const colors = ["#18181b", "#71717a", "#d4d4d8", "#10b981", "#f59e0b", "#3b82f6"];
 
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 65; i++) {
     particles.push({
-      x: canvas.width / 2 + (Math.random() - 0.5) * 200,
-      y: canvas.height * 0.6 + (Math.random() - 0.5) * 100,
+      x: canvas.width / 2,
+      y: canvas.height / 2,
       vx: (Math.random() - 0.5) * 14,
-      vy: -(Math.random() * 12 + 6),
-      size: Math.random() * 7 + 4,
+      vy: (Math.random() - 0.7) * 16,
+      size: Math.random() * 6 + 3,
       color: colors[Math.floor(Math.random() * colors.length)],
       rotation: Math.random() * 360,
-      rotSpeed: (Math.random() - 0.5) * 10,
+      rotSpeed: (Math.random() - 0.5) * 8,
       opacity: 1
     });
   }
 
-  let animFrame;
   const startTime = Date.now();
+  let animFrame = null;
 
   function render() {
     const elapsed = Date.now() - startTime;
-    if (elapsed > 2400) {
+    if (elapsed > 2000) {
       cancelAnimationFrame(animFrame);
       if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
       return;
@@ -149,9 +143,9 @@ function triggerConfetti() {
     particles.forEach(p => {
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.35; // gravity
+      p.vy += 0.35;
       p.rotation += p.rotSpeed;
-      p.opacity = Math.max(0, 1 - (elapsed / 2400));
+      p.opacity = Math.max(0, 1 - (elapsed / 2000));
 
       ctx.save();
       ctx.globalAlpha = p.opacity;
@@ -169,7 +163,7 @@ function triggerConfetti() {
 }
 
 // ==========================================
-// 3. UNIFIED ROUTER & STATE CONTROLLER
+// 3. UNIFIED ROUTER & APP CONTROLLER
 // ==========================================
 const UNIFIED_ROUTER = (() => {
   const modules = {
@@ -179,538 +173,517 @@ const UNIFIED_ROUTER = (() => {
   };
 
   const courseMeta = {
-    cw: {
-      code: "GEd 104",
-      title: "The Contemporary World",
-      shortTitle: "Contemporary World",
-      monogram: "CW",
-      badge: "General Education",
-      desc: "Comprehensive review covering Globalization Dimensions, Global Economy, Politics, Global Divides, and Regionalism.",
-      units: "Units 1 & 2 • 5 Modules",
-      tags: ["Globalization", "Market Integration", "UN & Global Governance", "Global Divides"],
-      flashcardsCount: 25,
-      questionsCount: 15
-    },
-    hci: {
-      code: "IT 321",
-      title: "Human-Computer Interaction",
-      shortTitle: "HCI & UI/UX",
-      monogram: "HCI",
-      badge: "Professional Major",
-      desc: "Complete syllabus mastery covering Human Memory & Senses, Interaction Frameworks, Gestalt Laws, Logic Syllogisms, and Dialog Styles.",
-      units: "Units 1, 2, 3 & 4 • Full Syllabus",
-      tags: ["Cognitive Models", "Gestalt Psychology", "Norman's Execution Cycle", "Golden Rules"],
-      flashcardsCount: 36,
-      questionsCount: 41
-    },
     mobcom: {
+      id: "mobcom",
       code: "CS 312",
       title: "Mobile Computing",
-      shortTitle: "Mobile Computing",
+      shortTitle: "MobCom",
       monogram: "MC",
-      badge: "Core Computing",
-      desc: "Cellular architectures, GSM/HLR/VLR call flow trace, 1G-5G generation matrix, handovers, and 12 official guide questions.",
-      units: "Units 1–4 • Cellular & Wireless",
-      tags: ["Cellular Arch & Handovers", "HLR / VLR / MSC Call Trace", "1G–5G Matrix", "Guide Questions"],
-      flashcardsCount: 24,
-      questionsCount: 20
+      terms: [
+        { id: "prelim", name: "Prelim", active: true, desc: "Foundations & Cellular Ch. 1" },
+        { id: "midterm", name: "Midterm", active: true, desc: "Mobile IP, GSM Architecture & Cellular" },
+        { id: "final", name: "Final", active: false, desc: "Advanced Wireless & 5G Slicing" }
+      ],
+      defaultTerm: "midterm",
+      defaultTool: "cheatsheet"
+    },
+    hci: {
+      id: "hci",
+      code: "IT 321",
+      title: "Human-Computer Interaction",
+      shortTitle: "HCI",
+      monogram: "HC",
+      terms: [
+        { id: "prelim", name: "Prelim", active: true, desc: "Units 1–4 Cognitive Models & Gestalt" },
+        { id: "midterm", name: "Midterm", active: false, desc: "Evaluation & Design Systems" },
+        { id: "final", name: "Final", active: false, desc: "Ubiquitous UI & Emerging Frameworks" }
+      ],
+      defaultTerm: "prelim",
+      defaultTool: "cheatsheet"
+    },
+    cw: {
+      id: "cw",
+      code: "GEd 104",
+      title: "The Contemporary World",
+      shortTitle: "Contemp World",
+      monogram: "CW",
+      terms: [
+        { id: "prelim", name: "Prelim", active: true, desc: "Weeks 1–5 Globalization Dimensions" },
+        { id: "midterm", name: "Midterm", active: false, desc: "Global Governance & Market Integration" },
+        { id: "final", name: "Final", active: false, desc: "Global Divides & Sustainability" }
+      ],
+      defaultTerm: "prelim",
+      defaultTool: "cheatsheet"
     }
   };
 
+  const standardTools = [
+    { id: "cheatsheet", name: "Cheat Sheet", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
+    { id: "flashcards", name: "Flashcards", icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" },
+    { id: "quiz", name: "Mock Exam", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" },
+    { id: "guide", name: "Guide Qs", icon: "M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" }
+  ];
+
+  // Router State
   let currentCourse = null;
-  let currentTab = null;
+  let currentTerm = null;
+  let currentTool = null;
+  let expandedCourses = { mobcom: true, hci: false, cw: false };
 
   function init() {
-    // 1. Initialize all sub-modules
     Object.values(modules).forEach(mod => {
       if (typeof mod.init === 'function') mod.init();
     });
 
-    // 2. Setup theme from localStorage
     initTheme();
-
-    // 3. Setup Keyboard Shortcuts
     setupKeyboardShortcuts();
-
-    // 4. Handle initial URL route or default to selector
+    renderSidebarTree();
     handleRouteFromHash();
 
-    // 5. Listen to Hash changes
-    window.addEventListener("hashchange", () => {
-      handleRouteFromHash();
-    });
+    window.addEventListener("hashchange", handleRouteFromHash);
   }
 
+  // Hash Format: #courseId/termId/toolId
   function handleRouteFromHash() {
-    const hash = window.location.hash.replace(/^#\/?/, "");
-    if (!hash) {
-      backToCourses(false);
+    const raw = window.location.hash.replace(/^#\/?/, "");
+    if (!raw) {
+      backToLanding(false);
       return;
     }
 
-    const parts = hash.split("/");
+    const parts = raw.split("/");
     const courseId = parts[0];
-    const tabId = parts[1] || null;
+    const termId = parts[1] || null;
+    const toolId = parts[2] || null;
 
-    if (modules[courseId]) {
-      selectCourse(courseId, tabId, false);
+    if (courseMeta[courseId]) {
+      selectTarget(courseId, termId, toolId, false);
     } else {
-      backToCourses(false);
+      backToLanding(false);
     }
   }
 
-  function selectCourse(courseId, tabId = null, updateHash = true) {
-    if (!modules[courseId]) return;
+  function selectTarget(courseId, termId = null, toolId = null, updateHash = true) {
+    if (!courseMeta[courseId]) return;
 
-    currentCourse = courseId;
-    const mod = modules[courseId];
     const meta = courseMeta[courseId];
+    currentCourse = courseId;
 
-    // Determine target tab
-    if (!tabId || !mod.tabs.some(t => t.id === tabId)) {
-      tabId = mod.tabs[0].id;
+    // Collapse all other courses so only the selected course is expanded
+    Object.keys(courseMeta).forEach(id => {
+      expandedCourses[id] = (id === courseId);
+    });
+
+    // Default term handling
+    if (!termId || !meta.terms.some(t => t.id === termId)) {
+      termId = meta.defaultTerm;
     }
-    currentTab = tabId;
+    currentTerm = termId;
 
-    // Update Header UI
-    updateHeaderForCourse(courseId, meta, mod.tabs, tabId);
+    // Tool mapping
+    if (!toolId) {
+      toolId = meta.defaultTool;
+    }
+    currentTool = toolId;
 
-    // Update Mobile Dock
-    updateMobileDock(courseId, mod.tabs, tabId);
+    // Close mobile drawer on navigation
+    closeMobileSidebar();
 
-    // Show Content View, Hide Course Selector View
-    const selectorView = document.getElementById("course-selector-view");
-    const mainContent = document.getElementById("main-content");
-    if (selectorView) selectorView.classList.add("hidden");
-    if (mainContent) mainContent.classList.remove("hidden");
+    // Update Header Breadcrumbs
+    updateBreadcrumbs(meta, termId, toolId);
 
-    // Render active tab view
-    mod.renderView(tabId, mainContent);
+    // Update Sidebar Selection States
+    renderSidebarTree();
 
-    // Update Hash
+    // Update Bottom Dock (Mobile Segmented Controller)
+    updateMobileDock(courseId, termId, toolId);
+
+    // Swap Landing view for Content view
+    const landing = document.getElementById("course-selector-view");
+    const main = document.getElementById("main-content");
+    if (landing) landing.classList.add("hidden");
+    if (main) main.classList.remove("hidden");
+
+    // Execute Module Rendering with context
+    renderCourseTool(courseId, termId, toolId, main);
+
     if (updateHash) {
-      window.location.hash = `${courseId}/${tabId}`;
+      window.location.hash = `${courseId}/${termId}/${toolId}`;
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function switchTab(tabId) {
-    if (!currentCourse || !modules[currentCourse]) return;
+  function renderCourseTool(courseId, termId, toolId, container) {
+    const mod = modules[courseId];
+    if (!mod) return;
 
-    const mod = modules[currentCourse];
-    if (!mod.tabs.some(t => t.id === tabId)) return;
-
-    currentTab = tabId;
-
-    // Update Desktop Tabs highlight
-    document.querySelectorAll(".course-nav-btn").forEach(btn => {
-      const isTarget = btn.getAttribute("data-tab") === tabId;
-      btn.className = `course-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
-        isTarget
-          ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm"
-          : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-      }`;
-    });
-
-    // Update Mobile Dock highlight
-    document.querySelectorAll(".mobile-dock-btn").forEach(btn => {
-      const isTarget = btn.getAttribute("data-tab") === tabId;
-      btn.className = `mobile-dock-btn flex-1 py-2 text-center text-xs font-mono font-semibold transition-colors ${
-        isTarget
-          ? "text-zinc-900 dark:text-zinc-100 border-t-2 border-zinc-900 dark:border-zinc-100"
-          : "text-zinc-500 dark:text-zinc-400"
-      }`;
-    });
-
-    const mainContent = document.getElementById("main-content");
-    if (mainContent) {
-      mod.renderView(tabId, mainContent);
+    // Apply term scoping context if module supports it
+    if (courseId === "mobcom") {
+      if (toolId === "cheatsheet") {
+        mod.state.cheatSheetFocus = (termId === "midterm") ? "midterm" : "all";
+      } else if (toolId === "flashcards") {
+        mod.filterFlashcards(termId === "midterm" ? "midterm-all" : "all");
+      } else if (toolId === "quiz") {
+        mod.setQuizMode(termId === "midterm" ? "midterm" : "all");
+      } else if (toolId === "guide") {
+        mod.filterGuide(termId === "midterm" ? "midterm" : "all");
+      }
+      mod.renderView(toolId, container);
+    } else {
+      // CW & HCI compatibility mapping
+      let legacyTab = toolId;
+      if (courseId === "cw" && toolId === "cheatsheet") legacyTab = "overview";
+      if (courseId === "cw" && toolId === "guide") legacyTab = "guide";
+      if (courseId === "hci" && toolId === "cheatsheet") legacyTab = "knowledge";
+      mod.renderView(legacyTab, container);
     }
-
-    window.location.hash = `${currentCourse}/${tabId}`;
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function backToCourses(updateHash = true) {
-    currentCourse = null;
-    currentTab = null;
+  function switchTool(toolId) {
+    if (!currentCourse || !currentTerm) return;
+    selectTarget(currentCourse, currentTerm, toolId, true);
+  }
 
-    // Reset Header
-    resetHeader();
+  function toggleCourseAccordion(courseId) {
+    const isCurrentlyExpanded = expandedCourses[courseId] === true;
 
-    // Reset Mobile Dock
-    const mobileDock = document.getElementById("mobile-dock");
-    if (mobileDock) {
-      mobileDock.innerHTML = `
-        <div class="py-2.5 text-center text-xs font-mono text-zinc-500">
-          Select a course above to begin reviewing
+    // Collapse all courses first
+    Object.keys(courseMeta).forEach(id => {
+      expandedCourses[id] = false;
+    });
+
+    // If it was closed, open only this one
+    if (!isCurrentlyExpanded) {
+      expandedCourses[courseId] = true;
+    }
+
+    renderSidebarTree();
+  }
+
+  function renderSidebarTree() {
+    const tree = document.getElementById("sidebar-tree");
+    if (!tree) return;
+
+    tree.innerHTML = Object.values(courseMeta).map(course => {
+      const isExpanded = expandedCourses[course.id] === true;
+      const isCurrentCourse = currentCourse === course.id;
+
+      return `
+        <div class="space-y-0.5">
+          <!-- Course Header (Tap target >= 44px) -->
+          <div
+            onclick="UNIFIED_ROUTER.toggleCourseAccordion('${course.id}')"
+            class="group w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left font-medium cursor-pointer transition-colors ${
+              isCurrentCourse
+                ? 'bg-zinc-100 dark:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 font-semibold'
+                : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 hover:text-zinc-900 dark:hover:text-zinc-200'
+            }"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-6 h-6 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono text-[11px] font-bold flex items-center justify-center shrink-0">
+                ${course.monogram}
+              </span>
+              <div class="truncate">
+                <span class="block text-xs font-mono font-bold leading-tight truncate">${course.code}</span>
+                <span class="block text-[11px] font-sans text-zinc-400 truncate leading-tight">${course.shortTitle}</span>
+              </div>
+            </div>
+            <svg class="w-3.5 h-3.5 text-zinc-400 transition-transform ${isExpanded ? 'rotate-90' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+
+          <!-- Child Tree: Terms ➔ Tools -->
+          ${isExpanded ? `
+            <div class="pl-4 pr-1 py-1 space-y-2 border-l border-zinc-200/60 dark:border-zinc-800/60 ml-4">
+              ${course.terms.map(term => {
+                const isSelectedTerm = isCurrentCourse && currentTerm === term.id;
+
+                if (!term.active) {
+                  return `
+                    <div class="px-2 py-1 flex items-center justify-between text-[11px] text-zinc-400 dark:text-zinc-600 select-none">
+                      <span class="font-mono">${term.name}</span>
+                      <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800/50">Soon</span>
+                    </div>
+                  `;
+                }
+
+                return `
+                  <div class="space-y-1">
+                    <!-- Term Label -->
+                    <div class="flex items-center justify-between px-2 pt-1 pb-0.5 text-[11px] font-mono font-bold uppercase tracking-wider ${
+                      isSelectedTerm ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400'
+                    }">
+                      <span>${term.name} Exam</span>
+                      ${term.id === 'midterm' && course.id === 'mobcom' ? '<span class="text-[9px] text-amber-600 dark:text-amber-400 font-bold">Focus</span>' : ''}
+                    </div>
+
+                    <!-- 4 Core Study Tools -->
+                    <div class="space-y-0.5">
+                      ${standardTools.map(tool => {
+                        const isToolActive = isSelectedTerm && currentTool === tool.id;
+                        return `
+                          <button
+                            onclick="UNIFIED_ROUTER.selectTarget('${course.id}', '${term.id}', '${tool.id}')"
+                            class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors ${
+                              isToolActive
+                                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium shadow-sm'
+                                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/50'
+                            }"
+                          >
+                            <svg class="w-3.5 h-3.5 opacity-70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="${tool.icon}" />
+                            </svg>
+                            <span class="truncate">${tool.name}</span>
+                          </button>
+                        `;
+                      }).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : ''}
         </div>
+      `;
+    }).join('');
+  }
+
+  function updateBreadcrumbs(meta, termId, toolId) {
+    const courseEl = document.getElementById("breadcrumb-course");
+    const container = document.getElementById("header-breadcrumbs");
+    if (!container) return;
+
+    const termObj = meta.terms.find(t => t.id === termId);
+    const toolObj = standardTools.find(t => t.id === toolId);
+
+    container.innerHTML = `
+      <span class="hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer" onclick="UNIFIED_ROUTER.backToLanding()">Portal</span>
+      <span class="opacity-40">/</span>
+      <span class="cursor-pointer hover:underline" onclick="UNIFIED_ROUTER.selectTarget('${meta.id}', '${termId}', '${toolId}')">${meta.code}</span>
+      <span class="opacity-40">/</span>
+      <span class="capitalize text-zinc-500">${termObj ? termObj.name : termId}</span>
+      <span class="opacity-40">/</span>
+      <span class="text-zinc-900 dark:text-zinc-100 font-semibold">${toolObj ? toolObj.name : toolId}</span>
+    `;
+  }
+
+  function updateMobileDock(courseId, termId, toolId) {
+    const dock = document.getElementById("mobile-dock");
+    const inner = document.getElementById("mobile-dock-inner");
+    if (!dock || !inner) return;
+
+    dock.classList.remove("hidden");
+
+    inner.innerHTML = standardTools.map(tool => {
+      const isActive = tool.id === toolId;
+      return `
+        <button
+          onclick="UNIFIED_ROUTER.switchTool('${tool.id}')"
+          class="dock-segment-btn ${isActive ? 'active' : ''}"
+        >
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="${tool.icon}" />
+          </svg>
+          <span class="truncate text-[10px]">${tool.name}</span>
+        </button>
+      `;
+    }).join('');
+  }
+
+  function backToLanding(updateHash = true) {
+    currentCourse = null;
+    currentTerm = null;
+    currentTool = null;
+
+    closeMobileSidebar();
+
+    const breadcrumbs = document.getElementById("header-breadcrumbs");
+    if (breadcrumbs) {
+      breadcrumbs.innerHTML = `
+        <span class="text-zinc-900 dark:text-zinc-100 font-medium">Reviewer Portal</span>
+        <span class="opacity-40">/</span>
+        <span class="text-zinc-400">All Courses</span>
       `;
     }
 
-    // Hide Main Content, Show Selector
-    const selectorView = document.getElementById("course-selector-view");
-    const mainContent = document.getElementById("main-content");
-    if (mainContent) mainContent.classList.add("hidden");
-    if (selectorView) {
-      selectorView.classList.remove("hidden");
-      renderCourseSelector(selectorView);
+    const dock = document.getElementById("mobile-dock");
+    if (dock) dock.classList.add("hidden");
+
+    const landing = document.getElementById("course-selector-view");
+    const main = document.getElementById("main-content");
+    if (main) main.classList.add("hidden");
+    if (landing) {
+      landing.classList.remove("hidden");
+      renderLandingView(landing);
     }
+
+    renderSidebarTree();
 
     if (updateHash) {
       history.pushState("", document.title, window.location.pathname + window.location.search);
     }
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function updateHeaderForCourse(courseId, meta, tabs, activeTabId) {
-    const backBtn = document.getElementById("header-back-btn");
-    if (backBtn) backBtn.classList.remove("hidden");
-
-    const brandMonogram = document.getElementById("header-monogram");
-    if (brandMonogram) brandMonogram.textContent = meta.monogram;
-
-    const brandTitle = document.getElementById("header-brand-title");
-    if (brandTitle) brandTitle.textContent = `${meta.code} • ${meta.shortTitle}`;
-
-    const brandSub = document.getElementById("header-brand-sub");
-    if (brandSub) brandSub.textContent = meta.badge;
-
-    // Render tabs in desktop nav
-    const tabsContainer = document.getElementById("header-desktop-tabs");
-    if (tabsContainer) {
-      tabsContainer.innerHTML = tabs.map(tab => {
-        const isActive = tab.id === activeTabId;
-        return `
-          <button
-            data-tab="${tab.id}"
-            onclick="UNIFIED_ROUTER.switchTab('${tab.id}')"
-            class="course-nav-btn px-3.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all ${
-              isActive
-                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm'
-                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            }"
-          >
-            ${tab.name}
-          </button>
-        `;
-      }).join('');
-    }
-  }
-
-  function resetHeader() {
-    const backBtn = document.getElementById("header-back-btn");
-    if (backBtn) backBtn.classList.add("hidden");
-
-    const brandMonogram = document.getElementById("header-monogram");
-    if (brandMonogram) brandMonogram.textContent = "3Y";
-
-    const brandTitle = document.getElementById("header-brand-title");
-    if (brandTitle) brandTitle.textContent = "BatStateU 3rd Year Reviewer Suite";
-
-    const brandSub = document.getElementById("header-brand-sub");
-    if (brandSub) brandSub.textContent = "Centralized Academic Mastery Hub";
-
-    const tabsContainer = document.getElementById("header-desktop-tabs");
-    if (tabsContainer) {
-      tabsContainer.innerHTML = `
-        <span class="text-xs font-mono text-zinc-400 dark:text-zinc-500 py-1.5 px-3">
-          3 Courses Available • 100% Exam-Aligned
-        </span>
-      `;
-    }
-  }
-
-  function updateMobileDock(courseId, tabs, activeTabId) {
-    const mobileDock = document.getElementById("mobile-dock");
-    if (!mobileDock) return;
-
-    mobileDock.innerHTML = `
-      <div class="flex items-center justify-around w-full">
-        <button
-          onclick="UNIFIED_ROUTER.backToCourses()"
-          class="flex-1 py-2 text-center text-xs font-mono text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-        >
-          ← All
-        </button>
-        ${tabs.map(tab => {
-          const isActive = tab.id === activeTabId;
-          return `
-            <button
-              data-tab="${tab.id}"
-              onclick="UNIFIED_ROUTER.switchTab('${tab.id}')"
-              class="mobile-dock-btn flex-1 py-2 text-center text-xs font-mono font-semibold transition-colors ${
-                isActive
-                  ? 'text-zinc-900 dark:text-zinc-100 border-t-2 border-zinc-900 dark:border-zinc-100'
-                  : 'text-zinc-500 dark:text-zinc-400'
-              }"
-            >
-              ${tab.name}
-            </button>
-          `;
-        }).join('')}
-      </div>
-    `;
-  }
-
-  function renderCourseSelector(container) {
-    const cwScore = CW_MODULE.calculateReadiness();
+  function renderLandingView(container) {
+    const mobScore = MOBCOM_MODULE.calculateReadiness();
     const hciScore = HCI_MODULE.calculateReadiness();
-    const mobcomScore = MOBCOM_MODULE.calculateReadiness();
-
-    const overallAvg = Math.round((cwScore + hciScore + mobcomScore) / 3);
+    const cwScore = CW_MODULE.calculateReadiness();
 
     container.innerHTML = `
-      <div class="space-y-10 animate-fade-in max-w-5xl mx-auto pb-12">
-        
-        <!-- Hero Banner -->
-        <div class="p-8 sm:p-10 rounded-3xl bg-zinc-900 text-white dark:bg-zinc-900 dark:border dark:border-zinc-800 shadow-xl relative overflow-hidden">
-          <div class="absolute -right-16 -top-16 w-64 h-64 bg-zinc-800 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
-          
-          <div class="relative z-10 max-w-2xl space-y-4">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-mono">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              BatStateU Midterm & Final Reviewer
-            </div>
-            
-            <h1 class="text-3xl sm:text-4xl font-serif font-bold tracking-tight text-white">
-              Centralized Academic Reviewer
-            </h1>
-            
-            <p class="text-sm text-zinc-300 leading-relaxed">
-              Consolidated 3rd-year coursework review platform styled with minimal monochrome aesthetics. Practice interactive 3D flashcards, take timed exam simulations, and explore visual cheat sheets with zero clutter.
-            </p>
-
-            <div class="pt-2 flex flex-wrap items-center gap-6 text-xs font-mono text-zinc-400">
-              <div class="flex items-center gap-2">
-                <span class="text-white font-bold text-base">3</span> Courses
-              </div>
-              <div class="w-px h-4 bg-zinc-700"></div>
-              <div class="flex items-center gap-2">
-                <span class="text-white font-bold text-base">85</span> Flashcards
-              </div>
-              <div class="w-px h-4 bg-zinc-700"></div>
-              <div class="flex items-center gap-2">
-                <span class="text-white font-bold text-base">76</span> Exam Questions
-              </div>
-              <div class="w-px h-4 bg-zinc-700"></div>
-              <div class="flex items-center gap-2">
-                <span class="text-emerald-400 font-bold text-base">${overallAvg}%</span> Suite Readiness
-              </div>
-            </div>
-          </div>
+      <div class="space-y-8 animate-fade-in pb-10">
+        <!-- Quiet Academic Header -->
+        <div class="space-y-1.5 pb-4 border-b border-zinc-200/80 dark:border-zinc-800/80">
+          <span class="quiet-chip">Batangas State University • CICS</span>
+          <h1 class="text-2xl sm:text-3xl font-serif font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+            Academic Examination Reviewer
+          </h1>
+          <p class="text-xs sm:text-sm text-zinc-500 max-w-xl leading-relaxed">
+            Select a course and examination scope from the sidebar or below to begin structured recall, practice drills, and mock test simulations.
+          </p>
         </div>
 
-        <!-- Course Cards Grid -->
-        <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100">
-              Select a Course Reviewer
-            </h2>
-            <span class="text-xs font-mono text-zinc-500">
-              Click any card to launch module
-            </span>
+        <!-- Grouped Course Directory -->
+        <div class="space-y-3">
+          <div class="text-[11px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+            Enrolled Coursework
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <!-- 1. CW Card -->
-            ${renderCourseCard(
-              'cw',
-              courseMeta.cw,
-              cwScore,
-              [
-                { label: 'Flashcards', val: '25 Cards' },
-                { label: 'Exam Bank', val: '15 Questions' },
-                { label: 'Syllabus', val: 'Units 1 & 2' }
-              ]
-            )}
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            ${Object.values(courseMeta).map(c => {
+              let score = 0;
+              if (c.id === 'mobcom') score = mobScore;
+              else if (c.id === 'hci') score = hciScore;
+              else score = cwScore;
 
-            <!-- 2. HCI Card -->
-            ${renderCourseCard(
-              'hci',
-              courseMeta.hci,
-              hciScore,
-              [
-                { label: 'Flashcards', val: '36 Cards' },
-                { label: 'Exam Bank', val: '41 Qs (100 Pts)' },
-                { label: 'Interactive', val: 'Logic & Gestalt Lab' }
-              ]
-            )}
+              return `
+                <div class="ios-inset-card p-4 sm:p-5 flex flex-col justify-between space-y-4 hover:border-zinc-400 dark:hover:border-zinc-700 transition-colors">
+                  <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                      <span class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-mono font-bold text-xs flex items-center justify-center">
+                        ${c.monogram}
+                      </span>
+                      <span class="text-[10px] font-mono text-zinc-400">${score}% Ready</span>
+                    </div>
+                    <div>
+                      <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 font-mono">${c.code}</h3>
+                      <h4 class="text-sm font-serif font-bold text-zinc-800 dark:text-zinc-200">${c.title}</h4>
+                    </div>
+                  </div>
 
-            <!-- 3. MobCom Card -->
-            ${renderCourseCard(
-              'mobcom',
-              courseMeta.mobcom,
-              mobcomScore,
-              [
-                { label: 'Flashcards', val: '24 Cards' },
-                { label: 'Mock Exam', val: '20 Questions' },
-                { label: 'Interactive', val: 'HLR/VLR Call Trace' }
-              ]
-            )}
-
-          </div>
-        </div>
-
-        <!-- Suite Features & Quick Study Tips -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-zinc-200 dark:border-zinc-800 text-xs">
-          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
-            <strong class="font-mono text-zinc-900 dark:text-zinc-100 block">⌨️ Keyboard Ergonomics</strong>
-            <p class="text-zinc-500 dark:text-zinc-400">Use <kbd class="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded font-mono text-[10px]">Space</kbd> to flip flashcards, <kbd class="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded font-mono text-[10px]">←</kbd> <kbd class="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded font-mono text-[10px]">→</kbd> to navigate, and <kbd class="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded font-mono text-[10px]">1</kbd>/<kbd class="px-1.5 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded font-mono text-[10px]">2</kbd> to mark mastery.</p>
-          </div>
-          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
-            <strong class="font-mono text-zinc-900 dark:text-zinc-100 block">🖨️ Clean Print-Ready</strong>
-            <p class="text-zinc-500 dark:text-zinc-400">Export high-density study guides directly to PDF or paper using standard browser print with optimized monochrome formatting.</p>
-          </div>
-          <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
-            <strong class="font-mono text-zinc-900 dark:text-zinc-100 block">💾 Persistent Local Progress</strong>
-            <p class="text-zinc-500 dark:text-zinc-400">Mastery statuses, practice exams, and interactive sandboxes persist securely in your browser's LocalStorage.</p>
-          </div>
-        </div>
-
-      </div>
-    `;
-  }
-
-  function renderCourseCard(courseId, meta, scorePct, stats) {
-    const isCompleted = scorePct >= 80;
-    return `
-      <div
-        onclick="UNIFIED_ROUTER.selectCourse('${courseId}')"
-        class="group cursor-pointer rounded-2xl p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-900 dark:hover:border-zinc-100 transition-all duration-300 hover:shadow-lg flex flex-col justify-between space-y-6"
-      >
-        <div class="space-y-4">
-          <!-- Top Row -->
-          <div class="flex items-center justify-between">
-            <div class="w-10 h-10 rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center font-mono font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
-              ${meta.monogram}
-            </div>
-            <span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-              ${meta.code}
-            </span>
-          </div>
-
-          <!-- Title & Desc -->
-          <div class="space-y-1">
-            <h3 class="text-base font-serif font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
-              ${meta.title}
-            </h3>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-2">
-              ${meta.desc}
-            </p>
-          </div>
-
-          <!-- Tags -->
-          <div class="flex flex-wrap gap-1.5">
-            ${meta.tags.map(t => `
-              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-50 dark:bg-zinc-800/80 text-zinc-500 dark:text-zinc-400 border border-zinc-200/60 dark:border-zinc-700/60">
-                ${t}
-              </span>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- Bottom Stats & Readiness Bar -->
-        <div class="space-y-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between text-xs font-mono">
-              <span class="text-zinc-500 dark:text-zinc-400">Exam Readiness</span>
-              <span class="font-bold ${isCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-900 dark:text-zinc-100'}">
-                ${scorePct}%
-              </span>
-            </div>
-            <div class="w-full h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-              <div class="h-full bg-zinc-900 dark:bg-zinc-100 rounded-full transition-all duration-500" style="width: ${scorePct}%"></div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-3 gap-2 text-center text-[10px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/40 p-2 rounded-xl">
-            ${stats.map(s => `
-              <div>
-                <div class="font-bold text-zinc-800 dark:text-zinc-200">${s.val}</div>
-                <div class="text-[9px] text-zinc-400">${s.label}</div>
-              </div>
-            `).join('')}
-          </div>
-
-          <div class="flex items-center justify-between text-xs font-mono font-bold text-zinc-900 dark:text-zinc-100 pt-1 group-hover:translate-x-0.5 transition-transform">
-            <span>Open Reviewer</span>
-            <span>→</span>
+                  <!-- Quick Exam Scope Links -->
+                  <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 space-y-1.5 text-xs font-mono">
+                    <span class="text-[10px] text-zinc-400 block uppercase">Exam Scopes</span>
+                    <div class="grid grid-cols-3 gap-1">
+                      ${c.terms.map(t => {
+                        if (!t.active) {
+                          return `<span class="py-1 text-center rounded bg-zinc-50 dark:bg-zinc-900/40 text-zinc-300 dark:text-zinc-700 text-[10px] select-none">${t.name}</span>`;
+                        }
+                        const isMidFocus = c.id === 'mobcom' && t.id === 'midterm';
+                        return `
+                          <button
+                            onclick="UNIFIED_ROUTER.selectTarget('${c.id}', '${t.id}', 'cheatsheet')"
+                            class="py-1 text-center rounded border border-zinc-200 dark:border-zinc-700/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[10px] font-medium transition-colors ${
+                              isMidFocus ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900 text-amber-900 dark:text-amber-300 font-bold' : 'text-zinc-700 dark:text-zinc-300'
+                            }"
+                          >
+                            ${t.name}
+                          </button>
+                        `;
+                      }).join('')}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
       </div>
     `;
   }
 
-  // ==========================================
-  // 4. KEYBOARD SHORTCUTS
-  // ==========================================
-  function setupKeyboardShortcuts() {
-    window.addEventListener("keydown", (e) => {
-      // Don't trigger if user is typing in an input/textarea
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+  // Mobile Drawer Controls
+  function toggleMobileSidebar() {
+    const sidebar = document.getElementById("app-sidebar");
+    const backdrop = document.getElementById("sidebar-backdrop");
+    if (!sidebar) return;
 
-      if (!currentCourse || !modules[currentCourse]) return;
-
-      const mod = modules[currentCourse];
-
-      // Flashcards Shortcuts
-      if (currentTab === "flashcards") {
-        if (e.code === "Space") {
-          e.preventDefault();
-          if (typeof mod.toggleFlip === 'function') mod.toggleFlip();
-        } else if (e.code === "ArrowRight") {
-          e.preventDefault();
-          if (typeof mod.nextCard === 'function') mod.nextCard();
-        } else if (e.code === "ArrowLeft") {
-          e.preventDefault();
-          if (typeof mod.prevCard === 'function') mod.prevCard();
-        } else if (e.key === "1") {
-          e.preventDefault();
-          if (typeof mod.markCard === 'function') mod.markCard(false);
-        } else if (e.key === "2") {
-          e.preventDefault();
-          if (typeof mod.markCard === 'function') mod.markCard(true);
-        }
-      }
-    });
+    const isOpen = !sidebar.classList.contains("-translate-x-full");
+    if (isOpen) {
+      closeMobileSidebar();
+    } else {
+      sidebar.classList.remove("-translate-x-full");
+      if (backdrop) backdrop.classList.remove("hidden");
+    }
   }
 
-  // ==========================================
-  // 5. THEME TOGGLER
-  // ==========================================
+  function closeMobileSidebar() {
+    const sidebar = document.getElementById("app-sidebar");
+    const backdrop = document.getElementById("sidebar-backdrop");
+    if (sidebar) sidebar.classList.add("-translate-x-full");
+    if (backdrop) backdrop.classList.add("hidden");
+  }
+
+  function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle("dark");
+    localStorage.setItem("unified_theme", isDark ? "dark" : "light");
+  }
+
   function initTheme() {
-    const savedTheme = localStorage.getItem("unified_theme");
-    if (savedTheme === "dark" || (!savedTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+    const saved = localStorage.getItem("unified_theme");
+    if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
   }
 
-  function toggleTheme() {
-    const isDark = document.documentElement.classList.toggle("dark");
-    localStorage.setItem("unified_theme", isDark ? "dark" : "light");
-    UNIFIED_AUDIO.play("flip");
+  function setupKeyboardShortcuts() {
+    window.addEventListener("keydown", (e) => {
+      // Avoid stealing input from inputs or modals
+      if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+
+      if (e.key === "Escape") {
+        closeMobileSidebar();
+        closeResetModal();
+      }
+
+      // Delegate flashcard shortcuts
+      if (currentTool === "flashcards" && currentCourse === "mobcom") {
+        if (e.code === "Space") {
+          e.preventDefault();
+          MOBCOM_MODULE.toggleFlip();
+        } else if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          MOBCOM_MODULE.prevCard();
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          MOBCOM_MODULE.nextCard();
+        } else if (e.key === "1") {
+          e.preventDefault();
+          MOBCOM_MODULE.markCard(false);
+        } else if (e.key === "2") {
+          e.preventDefault();
+          MOBCOM_MODULE.markCard(true);
+        }
+      }
+    });
   }
 
   return {
     init,
-    selectCourse,
-    switchTab,
-    backToCourses,
-    toggleTheme,
-    currentCourse: () => currentCourse,
-    currentTab: () => currentTab
+    selectTarget,
+    switchTool,
+    toggleCourseAccordion,
+    backToLanding,
+    toggleMobileSidebar,
+    closeMobileSidebar,
+    toggleTheme
   };
 })();
 
-// ==========================================
-// 6. GLOBAL MODAL CONTROLLERS (RESET)
-// ==========================================
+// Global Modal handlers
 function openResetModal() {
   const modal = document.getElementById("reset-modal");
   if (modal) modal.classList.remove("hidden");
@@ -721,36 +694,21 @@ function closeResetModal() {
   if (modal) modal.classList.add("hidden");
 }
 
-function confirmReset(target) {
-  if (target === "all") {
-    localStorage.removeItem("unified_cw_state");
-    localStorage.removeItem("unified_hci_state");
-    localStorage.removeItem("unified_mobcom_state");
-    localStorage.removeItem("unified_theme");
-  } else if (target === "cw") {
-    localStorage.removeItem("unified_cw_state");
-  } else if (target === "hci") {
-    localStorage.removeItem("unified_hci_state");
-  } else if (target === "mobcom") {
+function confirmReset(scope) {
+  if (scope === "mobcom" || scope === "all") {
     localStorage.removeItem("unified_mobcom_state");
   }
-
+  if (scope === "hci" || scope === "all") {
+    localStorage.removeItem("unified_hci_state");
+  }
+  if (scope === "cw" || scope === "all") {
+    localStorage.removeItem("unified_cw_state");
+  }
   closeResetModal();
-  location.reload();
+  window.location.reload();
 }
 
-// ==========================================
-// 7. INITIALIZE ON DOM READY & EXPORT GLOBALS
-// ==========================================
-if (typeof window !== "undefined") {
-  window.UNIFIED_ROUTER = UNIFIED_ROUTER;
-  window.UNIFIED_AUDIO = UNIFIED_AUDIO;
-  window.openResetModal = openResetModal;
-  window.closeResetModal = closeResetModal;
-  window.confirmReset = confirmReset;
-  window.triggerConfetti = triggerConfetti;
-}
-
+// Bootstrap app on DOMContentLoaded
 document.addEventListener("DOMContentLoaded", () => {
   UNIFIED_ROUTER.init();
 });
