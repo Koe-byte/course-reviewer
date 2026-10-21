@@ -17,8 +17,8 @@ const MOBCOM_DATA = {
     academicYear: "Academic Year 2026–2027",
     termScope: "Midterm Examination Coverage (Lessons 1, 2, & 3)",
     examStructure: {
-      totalItems: 20,
-      points: 20,
+      totalItems: 30,
+      points: 30,
       description: "Active recall mock exam aligned with Midterm Pointers: Mobile Internet Protocols (Mobile IP, TCP/UDP, IPv4 vs IPv6, NAT), GSM Network Architecture (MS, BSS, NSS, OSS, SIM, Call Transmission Flow), and Cellular Wireless Networks."
     },
     officialPointers: [
@@ -408,458 +408,455 @@ const MOBCOM_DATA = {
   ],
 
   quizQuestions: [
-    // --- MIDTERM EXAM SIMULATION (ITEMS 1 TO 20) ---
     {
       id: 1,
-      category: "🎯 Midterm: Mobile IP",
+      category: "Cellular Networks (L1.1)",
+      isMidterm: true,
+      question: "Why do cellular communications systems divide large geographic service areas into smaller cells instead of using one high-power transmitter?",
+      options: [
+        "To solve limited radio frequency availability and allow the same frequencies to be reused to serve millions of simultaneous users",
+        "Because high-power transmitters are legally restricted to transmitting analog voice signals only",
+        "Because radio frequency signals cannot travel farther than 200 meters through Earth's atmosphere",
+        "To force mobile handsets to consume more battery power when connecting to local base stations"
+],
+      correct: 0,
+      explanation: "Cellular communication divides coverage into cells to overcome frequency scarcity. Rather than using one high-power transmitter that can only support a few dozen simultaneous conversations, low-power base stations manage small geographic cells. This enables frequency reuse across distant cells, multiplying network capacity.",
+      hint: "Think about the two core practical problems cellular communication solved: limited radio spectrum availability and the demand to serve massive user densities simultaneously."
+    },
+    {
+      id: 2,
+      category: "Cellular Networks (L1.1)",
+      isMidterm: true,
+      question: "Why is a hexagonal cell geometry utilized in cellular network planning diagrams rather than circles or squares?",
+      options: [
+        "Hexagons reflect the actual physical shape of radio wave emissions in outdoor terrain",
+        "Hexagons approximate a circular coverage radius while allowing gapless 100% surface tessellation with zero overlaps or dead zones",
+        "Hexagonal cell towers are 50% cheaper to construct than triangular or square antennas",
+        "Hexagons prevent microwave signals from penetrating residential buildings"
+],
+      correct: 1,
+      explanation: "In planning diagrams, the hexagonal shape is used because it approximates a circular radiation area while allowing cells to be packed tightly together without leaving unserved gaps (dead zones) or creating unwanted overlapping coverage. In real life, cells are irregular due to terrain, structures, and foliage.",
+      hint: "Consider the geometric challenge: a circle represents ideal antenna radiation, but packing circles leaves gaps. Which polygon closest to a circle tiles a surface completely?"
+    },
+    {
+      id: 3,
+      category: "Cellular Networks (L1.1)",
+      isMidterm: true,
+      question: "What are the four basic foundational elements that work together in a cellular communications system?",
+      options: [
+        "Transmitter, Receiver, Optical Fiber, and Microwave Dish",
+        "Mobile Station (MS), Base Station (BS), Cell, and Handoff (Handover)",
+        "Satellite, Landline, Data Center, and Router",
+        "Ethernet Cable, Modulator, Demodulator, and Battery"
+],
+      correct: 1,
+      explanation: "Lesson 1.1 explicitly defines the four basic elements of a cellular system: 1. Mobile station (end-user device), 2. Base station (fixed transceiver on tower/rooftop), 3. Cell (geographic area served by a base station), and 4. Handoff/Handover (process transferring active connections between cells).",
+      hint: "Recall the end-user device, the tower transceiver, the geographic area covered, and the transition mechanism that preserves active calls as you travel."
+    },
+    {
+      id: 4,
+      category: "Cellular Networks (L1.2)",
+      isMidterm: true,
+      question: "In the cellular network architecture, what is the primary role of the Base Station Controller (BSC)?",
+      options: [
+        "It functions as the physical handset carrying the subscriber identity module",
+        "It manages and coordinates multiple Base Transceiver Stations (BTS), handling radio channel allocation and handoffs between cells",
+        "It acts as the international gateway connecting cellular phone calls to overseas submarine cables",
+        "It provides electrical battery backup to cell towers during power outages"
+],
+      correct: 1,
+      explanation: "The Base Station Controller (BSC) is the management brain of the radio subsystem. It controls and coordinates multiple Base Transceiver Stations (BTS), allocating frequency channels, adjusting RF power levels, and orchestrating handoffs as mobile stations cross cell boundaries.",
+      hint: "Differentiate between the physical antenna tower (BTS) and the regional coordinator that supervises multiple towers and allocates frequencies."
+    },
+    {
+      id: 5,
+      category: "Cellular Networks (L1.2)",
+      isMidterm: true,
+      question: "In cellular frequency reuse planning (such as the repeating 7-cell cluster pattern A\u2013G), how is co-channel interference avoided?",
+      options: [
+        "Cells within the same cluster use identical frequencies, while neighboring clusters use different ones",
+        "Each cell within a repeating cluster is assigned a different frequency set, and identical frequency sets are separated by sufficient geographic distance",
+        "All cell towers transmit on the same single frequency but use different colored LED beacons",
+        "Base stations shut down transmission whenever a neighboring tower is active"
+],
+      correct: 1,
+      explanation: "In frequency reuse, cells are organized into repeating clusters (e.g. N=7 labeled A through G). Each cell within a cluster is allocated a unique frequency band. The entire cluster pattern is repeated across the metropolitan area, ensuring cells using identical frequencies are separated by safe physical distances to prevent co-channel interference.",
+      hint: "Think of cluster repetition: no two adjacent cells in a cluster share frequencies, and identical frequency groups are placed far enough apart to prevent signal collisions."
+    },
+    {
+      id: 6,
+      category: "Cellular Networks (L1.2)",
+      isMidterm: true,
+      question: "What is the key technical distinction between 'Handoff' and 'Roaming'?",
+      options: [
+        "Handoff is between different countries; Roaming occurs between adjacent city streets",
+        "Handoff seamlessly transfers an active call between adjacent base stations within the same operator's network; Roaming allows a device to obtain service on a partner operator's network outside home coverage",
+        "Handoff requires restarting the mobile phone; Roaming is an automatic hardware upgrade",
+        "Handoff applies only to text messages; Roaming applies only to emergency 911 calls"
+],
+      correct: 1,
+      explanation: "Handoff (handover) is the automatic process of transferring an active call or data session between cell towers within a single carrier's network without dropouts. Roaming refers to obtaining cellular service when traveling outside the home operator's coverage area by utilizing a partner carrier's network.",
+      hint: "One maintains an ongoing call across towers of the same carrier; the other connects your device to a visited partner network when traveling outside home coverage."
+    },
+    {
+      id: 7,
+      category: "Cellular Generations (L1.3)",
+      isMidterm: true,
+      question: "Which cellular generation marked the shift from analog signals to digital transmission, introduced SMS text messaging, and laid the foundation with GSM?",
+      options: [
+        "First Generation (1G)",
+        "Second Generation (2G)",
+        "Third Generation (3G)",
+        "Fourth Generation (4G)"
+],
+      correct: 1,
+      explanation: "The Second Generation (2G), introduced in the early 1990s, replaced analog radio (1G) with digital transmission. It significantly improved voice quality and capacity, introduced SMS text messaging, and established GSM as the dominant worldwide standard.",
+      hint: "Think of the generation introduced in the early 1990s that brought digital clarity, security, and Short Message Service (SMS)."
+    },
+    {
+      id: 8,
+      category: "Cellular Generations (L1.3)",
+      isMidterm: true,
+      question: "How did Fourth Generation (4G LTE) cellular technology fundamentally differ from previous generations in its core data transmission approach?",
+      options: [
+        "It returned to analog FM radio waves to save battery life",
+        "It was built specifically around an all-IP (Internet Protocol) packet-switched network, completely replacing legacy circuit-switched voice methods",
+        "It eliminated all cell towers and relied exclusively on low-earth orbit satellites",
+        "It restricted mobile devices to sending maximum 160-character messages"
+],
+      correct: 1,
+      explanation: "4G LTE (introduced ~2009) was built specifically around an all-IP packet-switched architecture, eliminating the legacy circuit-switched methods used for voice in earlier generations. All traffic\u2014including voice via VoLTE\u2014is transmitted as high-speed IP packets.",
+      hint: "Recall which cellular generation abandoned legacy telephone circuit-switching and adopted unified packet-switched Internet Protocol (IP) for everything."
+    },
+    {
+      id: 9,
+      category: "Cellular Technologies (L1.4)",
+      isMidterm: true,
+      question: "What is the primary motivation for 'Network Densification' through the deployment of small cells in modern cellular systems?",
+      options: [
+        "To replace all fiber-optic backbone cables with copper telephone wire",
+        "To add numerous smaller, lower-power base stations in high-demand zones (stadiums, downtown centers) to multiply local capacity where macro towers become congested",
+        "To force smartphones to switch to Wi-Fi 2.4 GHz only",
+        "To eliminate the need for SIM cards in mobile phones"
+],
+      correct: 1,
+      explanation: "Network densification deploys smaller, lower-power base stations (small cells) alongside traditional macro towers in high-density locations like shopping districts, city centers, and sports arenas. This increases localized capacity and handles immense user traffic within the same physical space.",
+      hint: "Think of crowded venues: when large cell towers are swamped with traffic, how do operators pack extra capacity into small physical areas?"
+    },
+    {
+      id: 10,
+      category: "Cellular Technologies (L1.4)",
+      isMidterm: true,
+      question: "Which 5G Network Slice is designed for mission-critical applications like autonomous vehicles, remote surgery, and industrial robotics requiring sub-1ms latency and 99.999% reliability?",
+      options: [
+        "Extreme/Enhanced Mobile Broadband (eMBB)",
+        "Massive Machine-Type Communication (mMTC)",
+        "Ultra-Reliable Low-Latency Communication (URLLC)",
+        "Voice over Internet Protocol (VoIP)"
+],
+      correct: 2,
+      explanation: "Ultra-Reliable Low-Latency Communication (URLLC) is the 5G network slice specifically engineered for mission-critical use cases requiring sub-millisecond delay and 99.999% uptime, such as telesurgery, vehicle-to-everything (V2X) autonomous driving, and industrial automation.",
+      hint: "Look for the slice whose title highlights extreme dependability and almost instantaneous network response times."
+    },
+    {
+      id: 11,
+      category: "Mobile IP (L2.1)",
+      isMidterm: true,
+      question: "How does packet switching in IP networks provide superior efficiency and resilience compared to legacy circuit switching?",
+      options: [
+        "By dedicating a continuous physical wire between callers for the entire duration of a session",
+        "By breaking messages into small independent packets that travel over shared store-and-forward routes, allowing dynamic rerouting around failed links",
+        "By broadcasting every message simultaneously to every device connected to the internet",
+        "By converting all digital characters into Morse code before transmission"
+],
+      correct: 1,
+      explanation: "Packet switching breaks data into discrete units (packets) that travel independently across store-and-forward routers. This allows shared, efficient use of network infrastructure and makes the network resilient: if a link fails, packets are dynamically rerouted along alternate paths.",
+      hint: "Consider how packets navigate a shared network: independent chunks, dynamic routing, and surviving broken links through alternate paths."
+    },
+    {
+      id: 12,
+      category: "Mobile IP (L2.2)",
       isMidterm: true,
       question: "Why does host mobility fundamentally break standard IP routing in traditional internet architectures?",
       options: [
         "Traditional IP addresses use Roman numerals that cannot be transmitted over radio waves",
         "An IP address serves a dual conflicting role: endpoint identifier for TCP sockets and topological routing locator for network subnets",
-        "Mobile phones do not have network interface cards (NICs) with physical MAC addresses",
-        "Routers automatically block any device that moves faster than 10 km/h"
-      ],
+        "Mobile phones do not possess network interface cards (NICs) with physical MAC addresses",
+        "Routers automatically block any device moving faster than 10 km/h"
+],
       correct: 1,
-      explanation: "In traditional IP, an address serves two roles simultaneously: endpoint identity (TCP socket 4-tuple) and topological location. If a device moves and changes IP, active TCP sockets disconnect; if it keeps its IP, routers cannot route packets to the foreign network.",
-      hint: "Consider the dual identity of an IP address: it acts both as a permanent endpoint ID for active TCP connections and as a physical topological routing locator based on subnets."
+      explanation: "The 'Mobility Dilemma': An IP address conflates an endpoint identifier (identifying TCP socket connections) with a topological routing locator (specifying the physical subnet attachment). Changing IP disconnects active TCP sessions; keeping the home IP prevents foreign routers from delivering packets.",
+      hint: "Consider the dual identity of an IP address: socket identifier (TCP 4-tuple) vs. subnet physical location."
     },
     {
-      id: 2,
-      category: "🎯 Midterm: Mobile IP",
+      id: 13,
+      category: "Mobile IP (L2.2)",
       isMidterm: true,
-      question: "Which transport layer protocol should be chosen for real-time mobile video calling (e.g. Zoom/FaceTime), and why?",
+      question: "In mobile-aware IP addressing, what is the specific role of the Care-of Address (CoA)?",
       options: [
-        "TCP, because it guarantees every lost frame is retransmitted regardless of delay",
-        "UDP, because its lightweight 8-byte header and lack of retransmissions prioritize low latency over dropped packets",
-        "FTP, because it provides end-to-end file encryption",
-        "ICMP, because it ping-tests the cell tower continuously"
-      ],
+        "It is the permanent address assigned to the subscriber at birth by the government",
+        "It is a temporary address associated with the foreign network that identifies the mobile device's current location while away from home",
+        "It is the MAC address burned into the mobile phone's Wi-Fi chip",
+        "It is the serial number of the cell tower battery"
+],
       correct: 1,
-      explanation: "UDP is connectionless and does not retransmit lost packets. In real-time communications (VoIP/video), a dropped packet is simply ignored; waiting for TCP retransmissions causes unacceptable buffering and audio/video lag.",
-      hint: "In live interactive video, waiting to retransmit lost frames introduces buffering lag. Think of which protocol is connectionless and prioritizes timeliness over 100% reliability."
+      explanation: "The Care-of Address (CoA) is a temporary local IP address obtained by a mobile device whenever it connects to a foreign network away from home. It represents the mobile node's current topological point of network attachment, allowing tunneled packets to reach it.",
+      hint: "Think of a temporary forwarding address you leave when staying at a hotel away from your permanent home."
     },
     {
-      id: 3,
-      category: "🎯 Midterm: Mobile IP",
+      id: 14,
+      category: "TCP/IP Protocol (L2.3)",
       isMidterm: true,
-      question: "Why does standard TCP congestion control suffer severe throughput collapse over mobile wireless links?",
+      question: "In the 4-layer TCP/IP model, which layer is responsible for end-to-end data chunking, sequencing, acknowledgments, and retransmissions?",
       options: [
-        "TCP assumes all packet losses are caused by network congestion and throttles its window, whereas wireless losses are mostly caused by bit errors and RF fading",
-        "Wireless antennas are unable to decode TCP checksums",
-        "Cell towers refuse to forward TCP SYN packets",
+        "Application Layer",
+        "Transport Layer",
+        "Internet Layer",
+        "Network Access (Link) Layer"
+],
+      correct: 1,
+      explanation: "The Transport Layer (hosting TCP and UDP) manages end-to-end communication between applications. It handles segment chunking, sequencing, acknowledgments (ACKs), and necessary packet retransmissions to ensure dependable data delivery.",
+      hint: "Which layer hosts TCP and UDP and manages reliability, handshakes, and port multiplexing?"
+    },
+    {
+      id: 15,
+      category: "TCP/IP Protocol (L2.3)",
+      isMidterm: true,
+      question: "According to the TCP vs. UDP comparison matrix in the module, which transport layer protocol should be chosen for real-time mobile video calling (VoIP/Zoom), and why?",
+      options: [
+        "TCP, because its variable 20\u201360 byte header provides mandatory military-grade encryption",
+        "UDP, because its connectionless nature, fixed 8-byte header, and lack of retransmissions prioritize low latency over dropped packets",
+        "TCP, because it forces the caller to wait until all dropped audio frames are successfully retransmitted",
+        "UDP, because it requires a 3-way handshake prior to sending every single pixel"
+],
+      correct: 1,
+      explanation: "UDP is connectionless and does not retransmit lost packets. In real-time video/voice communications, late packets are useless; waiting for TCP retransmissions creates unacceptable buffering lag. UDP's lightweight 8-byte header ensures minimal delay and immediate streaming.",
+      hint: "In live voice/video, timeliness trumps 100% perfection. Which protocol has an 8-byte header and avoids buffering delays by not retransmitting?"
+    },
+    {
+      id: 16,
+      category: "TCP/IP Protocol (L2.3)",
+      isMidterm: true,
+      question: "Why does standard TCP congestion control suffer severe throughput collapse across mobile wireless environments?",
+      options: [
+        "TCP assumes all packet loss is caused by network router buffer congestion and throttles its window, whereas wireless losses are mostly temporary signal fades and handoffs",
+        "Mobile antennas cannot compute the 16-bit TCP checksum",
+        "Cellular base stations block all TCP SYN packets by default",
         "TCP packets exceed the physical length of radio waves"
-      ],
+],
       correct: 0,
-      explanation: "The 'Congestion Fallacy': TCP interprets any dropped packet as router buffer overflow and cuts its transmission window. On wireless links, drops are caused by RF fading, interference, and handoffs—throttling the window degrades bandwidth unnecessarily.",
-      hint: "Recall the 'Congestion Fallacy': TCP's classic algorithm presumes any dropped packet is due to buffer overflow at routers, mistakenly throttling transmission speed on noisy wireless links."
+      explanation: "The 'Congestion Fallacy': Standard TCP was designed for wired networks where packet loss almost always means router buffer congestion. On wireless mobile links, losses are usually caused by RF fading, interference, or cell handoffs. Throttling TCP's window under these conditions degrades bandwidth unnecessarily.",
+      hint: "Recall why TCP's wired assumption fails: it presumes lost packets mean full router queues, mistakenly cutting speed when the drop was just radio static."
     },
     {
-      id: 4,
-      category: "🎯 Midterm: Mobile IP",
+      id: 17,
+      category: "Mobile IP (L2.4)",
       isMidterm: true,
-      question: "In Mobile IP (RFC 3344), what mechanism allows the Home Agent (HA) to intercept packets sent to an absent Mobile Node?",
+      question: "In Mobile IP (RFC 3344), what mechanism allows the Home Agent (HA) to intercept packets sent to an absent Mobile Node's permanent address?",
       options: [
-        "The HA physically detaches the mobile node's Ethernet cable",
-        "The HA issues Proxy ARP replies on the home network, claiming the Mobile Node's IP address maps to the HA's own MAC address",
-        "The HA restarts the home router every 5 seconds",
-        "The HA requests the Correspondent Node to change its IP address"
-      ],
+        "The HA physically unplugs the mobile node's Ethernet cable from the wall",
+        "The HA issues Proxy ARP replies on the home network, claiming the Mobile Node's IP maps to the HA's own hardware MAC address",
+        "The HA requests the Correspondent Node to change its own IP address",
+        "The HA reboots the home network router every 10 seconds"
+],
       correct: 1,
-      explanation: "When the MN is away, the Home Agent activates Proxy ARP (Address Resolution Protocol). When local routers ask 'Who has MN's IP?', the HA answers with its own hardware MAC address, allowing it to intercept and tunnel all incoming packets.",
-      hint: "Think of the Layer 2 resolution protocol that maps an IP address to a hardware MAC address on local subnets. How can the Home Agent pretend to be the absent device?"
+      explanation: "When the Mobile Node is away, the Home Agent activates Proxy ARP. When home routers ask 'Who has MN's IP?', the HA responds with its own hardware MAC address, allowing it to intercept all incoming packets and encapsulate them in tunnels to the foreign network.",
+      hint: "Think of the Layer 2 Address Resolution Protocol: how can the Home Agent trick local routers into delivering the mobile node's mail to itself?"
     },
     {
-      id: 5,
-      category: "🎯 Midterm: Mobile IP",
-      isMidterm: true,
-      question: "What is the key difference between a Foreign Agent Care-of Address (FA-CoA) and a Collocated Care-of Address?",
-      options: [
-        "FA-CoA is an IPv6 address; Collocated CoA is an IPv4 address",
-        "FA-CoA is the shared IP of the Foreign Agent's router interface, while a Collocated CoA is a temporary local IP acquired directly by the Mobile Node (e.g. via DHCP)",
-        "Collocated CoA requires buying a new SIM card; FA-CoA does not",
-        "FA-CoA is permanent for 10 years; Collocated CoA expires after 1 second"
-      ],
-      correct: 1,
-      explanation: "With an FA-CoA, multiple visiting mobile nodes share the Foreign Agent router's IP, and the FA terminates the tunnel. With a Collocated CoA, the MN acquires its own dedicated local IP on the foreign subnet and decapsulates packets itself.",
-      hint: "Ask whether the Care-of Address belongs to a visiting router interface shared by many nodes, or is leased directly to the handset itself (e.g., via DHCP)."
-    },
-    {
-      id: 6,
-      category: "🎯 Midterm: Mobile IP",
+      id: 18,
+      category: "Mobile IP (L2.4)",
       isMidterm: true,
       question: "Why is 'Reverse Tunneling' (RFC 3024) necessary when a Mobile Node transmits packets back to a Correspondent Node?",
       options: [
-        "Because radio signals cannot travel in reverse without physical mirrors",
-        "Because foreign network border routers enforce Ingress Filtering, dropping outgoing packets whose source IP does not match the foreign subnet prefix",
-        "To increase the download speed of the mobile node by 500%",
-        "To prevent the Correspondent Node from learning the Home Agent's MAC address"
-      ],
+        "Because radio waves cannot travel in reverse without physical glass mirrors",
+        "Because foreign border routers enforce Ingress Filtering, discarding outgoing packets whose source IP does not match the foreign subnet prefix",
+        "To increase the download speed of the mobile device by 500%",
+        "To prevent the Correspondent Node from discovering the user's phone number"
+],
       correct: 1,
-      explanation: "Under Direct Routing, the MN transmits packets with Source IP = Home Address. Foreign ISP routers running Ingress Filtering (anti-spoofing) discard packets whose source IP doesn't match the local subnet. Reverse Tunneling tunnels them back to the HA to bypass this filter.",
-      hint: "Look out for edge security policies: foreign ISP border routers discard outgoing packets whose source IP addresses do not belong to their local IP subnet range (anti-spoofing)."
+      explanation: "When an MN transmits directly with Source IP = Home Address, foreign border firewalls running Ingress Filtering (anti-spoofing security) drop the packets because the source IP doesn't match the foreign subnet. Reverse Tunneling tunnels them back to the Home Agent to bypass this filter.",
+      hint: "Consider security at foreign network borders: routers discard packets whose source IP does not match their local address range (anti-spoofing)."
     },
     {
-      id: 7,
-      category: "🎯 Midterm: Mobile IP",
+      id: 19,
+      category: "Mobile IP (L2.4)",
       isMidterm: true,
-      question: "Which major entity from Mobile IPv4 was completely eliminated in Mobile IPv6?",
+      question: "Which major network entity from Mobile IPv4 was completely eliminated in Mobile IPv6?",
       options: [
         "Home Agent (HA)",
         "Mobile Node (MN)",
         "Foreign Agent (FA)",
         "Correspondent Node (CN)"
-      ],
+],
       correct: 2,
-      explanation: "Mobile IPv6 eliminates Foreign Agents completely! Thanks to Stateless Address Autoconfiguration (SLAAC) and abundant 128-bit addresses, any IPv6 Mobile Node can dynamically generate its own collocated CoA anywhere without an FA router.",
-      hint: "In IPv6, Stateless Address Autoconfiguration (SLAAC) allows mobile nodes to generate their own local Care-of Addresses, making an intermediary visiting router redundant."
-    },
-    {
-      id: 8,
-      category: "🎯 Midterm: Mobile IP",
-      isMidterm: true,
-      question: "Why is Network Address Translation (NAT) absent and unnecessary in IPv6?",
-      options: [
-        "IPv6 routers do not support port numbers",
-        "IPv6 provides an inexhaustible 128-bit address space ($3.4 \times 10^{38}$ IPs), restoring the End-to-End Principle with unique public addresses for every device",
-        "The United Nations legally banned NAT in 2020",
-        "IPv6 packets cannot be transmitted through firewalls"
-      ],
-      correct: 1,
-      explanation: "NAT was an emergency band-aid in IPv4 to stave off address depletion. Because IPv6 provides $3.4 \times 10^{38}$ globally routable addresses, every single device on Earth can have a unique public address, eliminating NAT and restoring true end-to-end communication.",
-      hint: "Focus on the enormous 128-bit address space. NAT was an emergency workaround for address depletion; with billions of IPs per person, every node gets a unique public IP."
-    },
-    {
-      id: 9,
-      category: "🎯 Midterm: Mobile IP",
-      isMidterm: true,
-      question: "How does Route Optimization in Mobile IPv6 improve upon Mobile IPv4?",
-      options: [
-        "It eliminates radio waves and uses satellite lasers",
-        "It allows Correspondent Nodes and Mobile Nodes to communicate directly without routing every packet through the Home Agent (bypassing triangular routing)",
-        "It increases the battery life of mobile phones to 3 months",
-        "It encrypts all internet traffic using MD5"
-      ],
-      correct: 1,
-      explanation: "In Mobile IPv4, packets from CN must always travel to the HA first (triangular routing). In Mobile IPv6, Route Optimization is built-in: using Binding Updates and IPv6 Routing Headers, CN and MN can exchange data directly after initial discovery.",
-      hint: "In IPv4, packets must always traverse the Home Agent first. Think of how IPv6 eliminates that inefficient triangular path."
-    },
-    {
-      id: 10,
-      category: "🎯 Midterm: GSM",
-      isMidterm: true,
-      question: "What primary modulation upgrade allowed EDGE (2.75G) to triple the data throughput of GPRS (2.5G) across the same 200 kHz channel?",
-      options: [
-        "Switching from Gaussian Minimum Shift Keying (GMSK, 1 bit/symbol) to 8-Phase Shift Keying (8-PSK, 3 bits/symbol)",
-        "Replacing radio waves with fiber-optic pulses",
-        "Upgrading from 32-bit to 128-bit microprocessors",
-        "Eliminating the Base Station Controller"
-      ],
-      correct: 0,
-      explanation: "GMSK in GPRS encodes 1 bit per symbol. EDGE introduced 8-PSK, where each radio symbol represents 3 bits ($2^3 = 8$). This mathematically triples the transmission speed over the exact same 200 kHz channel, reaching up to 384 kbps.",
-      hint: "Compare GMSK (1 bit per radio symbol) with an advanced phase modulation where each constellation state conveys 3 bits (2^3 = 8)."
-    },
-    {
-      id: 11,
-      category: "🎯 Midterm: GSM",
-      isMidterm: true,
-      question: "What is the function of Adaptive Modulation and Coding (AMC) in EDGE networks?",
-      options: [
-        "It translates spoken English into Spanish during phone calls",
-        "It dynamically switches between modulation schemes (GMSK vs 8-PSK) and coding schemes (MCS-1 to MCS-9) based on real-time radio signal quality",
-        "It increases the transmission power of cell towers during rainstorms",
-        "It reboots the smartphone when battery level drops below 20%"
-      ],
-      correct: 1,
-      explanation: "AMC dynamically adapts: close to the tower with high signal quality, it uses MCS-9 (8-PSK with minimal redundancy) for maximum speed (up to 384 kbps); far from the tower with high noise, it downshifts to MCS-1 (GMSK with heavy error correction) to maintain connection stability.",
-      hint: "Think of an automobile changing gears: close to the cell tower it shifts into high-speed 8-PSK, but in noisy fringes it downshifts to robust GMSK with heavy error correction."
-    },
-    {
-      id: 12,
-      category: "🎯 Midterm: GSM",
-      isMidterm: true,
-      question: "Which GSM subsystem is directly responsible for managing radio channel allocation, transmitter power levels, and handoffs between base stations?",
-      options: [
-        "Mobile Station Subsystem (MS)",
-        "Base Station Controller (BSC) within the Base Station Subsystem (BSS)",
-        "Authentication Center (AuC) within the NSS",
-        "Operations Support Subsystem (OSS)"
-      ],
-      correct: 1,
-      explanation: "The Base Station Controller (BSC) manages radio resources for multiple BTS towers, dynamically assigning frequency channels, controlling handset transmit power, and coordinating handoffs as users move across cells.",
-      hint: "Look for the brain of the Base Station Subsystem (BSS) that coordinates multiple BTS cell towers and handles handovers."
-    },
-    {
-      id: 13,
-      category: "🎯 Midterm: GSM",
-      isMidterm: true,
-      question: "Which database in the GSM Network and Switching Subsystem (NSS) stores the secret symmetric key (Ki) and generates authentication triplets?",
-      options: [
-        "Equipment Identity Register (EIR)",
-        "Authentication Center (AuC)",
-        "Gateway Mobile Switching Center (GMSC)",
-        "Visitor Location Register (VLR)"
-      ],
-      correct: 1,
-      explanation: "The AuC (Authentication Center) stores the subscriber's secret 128-bit key (Ki). It executes the A3/A8 cryptographic algorithms to produce authentication triplets (RAND, SRES, Kc) to verify the SIM card and encrypt over-the-air voice calls.",
-      hint: "This security vault inside the core network works hand-in-hand with the HLR to produce RAND, SRES, and Kc triplets using the Ki key."
-    },
-    {
-      id: 14,
-      category: "🎯 Midterm: GSM",
-      isMidterm: true,
-      question: "In GSM mobility tracking, what is the core functional difference between the HLR and the VLR?",
-      options: [
-        "HLR is for voice calls; VLR is for text messages",
-        "HLR is the permanent master database of all home subscribers; VLR is a temporary local database caching data for subscribers currently active in an MSC's service area",
-        "HLR is located inside the smartphone; VLR is on the cell tower",
-        "HLR stores stolen phone serial numbers; VLR stores phone numbers"
-      ],
-      correct: 1,
-      explanation: "The Home Location Register (HLR) is the central permanent database holding master subscriber profiles and service permissions. The Visitor Location Register (VLR) temporarily caches subscriber records while they roam in an MSC's area to avoid querying the distant HLR for every call.",
-      hint: "One is the central permanent home repository of subscriber profiles; the other is a localized, temporary caching register for currently visiting handsets."
-    },
-    {
-      id: 15,
-      category: "🎯 Midterm: GSM",
-      isMidterm: true,
-      question: "What is the role of the Equipment Identity Register (EIR) 'Black List'?",
-      options: [
-        "To list subscribers who have overdue monthly phone bills",
-        "To list stolen, counterfeit, or barred physical handset IMEIs that are blocked from connecting to the cellular network",
-        "To store phone numbers of telemarketers",
-        "To log phone calls placed after midnight"
-      ],
-      correct: 1,
-      explanation: "The EIR organizes 15-digit hardware IMEIs into White (authorized), Gray (monitored), and Black lists. Handsets listed on the Black List (reported stolen or unauthorized) are strictly banned from accessing any network service.",
-      hint: "Remember the 3 EIR lists (White, Gray, Black). The Black list targets hardware device serial numbers (IMEI) reported stolen or non-certified."
-    },
-    {
-      id: 16,
-      category: "🎯 Midterm: GSM",
-      isMidterm: true,
-      question: "What is the purpose of the Gateway MSC (GMSC) in a cellular network?",
-      options: [
-        "It functions as an interface bridge connecting the GSM cellular network with external networks like the PSTN, ISDN, and other mobile carriers",
-        "It recharges the mobile phone battery wirelessly from 10 miles away",
-        "It acts as the primary web browser on smartphones",
-        "It tracks the GPS coordinates of the cell tower"
-      ],
-      correct: 0,
-      explanation: "The Gateway MSC (GMSC) is an MSC equipped with external signaling interfaces. Any incoming call from an external fixed landline (PSTN) or another mobile operator first enters the cellular network through the GMSC, which queries the HLR to route the call.",
-      hint: "Think of an entry portal or customs checkpoint that bridges the mobile carrier's internal network with external wireline telephone networks (PSTN)."
-    },
-    {
-      id: 17,
-      category: "🎯 Midterm: GSM",
-      isMidterm: true,
-      question: "Which identifier is stored on the SIM card to uniquely identify the subscriber to the cellular network core?",
-      options: [
-        "IMEI (International Mobile Equipment Identity)",
-        "IMSI (International Mobile Subscriber Identity)",
-        "MAC Address",
-        "URL (Uniform Resource Locator)"
-      ],
-      correct: 1,
-      explanation: "The IMSI (International Mobile Subscriber Identity) is the unique 15-digit number stored in the SIM card that identifies the subscriber on the cellular network. In contrast, the IMEI identifies the physical phone handset.",
-      hint: "Distinguish between the handset hardware identity (IMEI) and the 15-digit subscriber chip profile (IMSI)."
-    },
-    {
-      id: 18,
-      category: "🎯 Midterm: GSM",
-      isMidterm: true,
-      question: "When a call is placed to a mobile user, what temporary number does the destination VLR allocate to route the call through the backbone?",
-      options: [
-        "MSRN (Mobile Station Roaming Number)",
-        "PIN (Personal Identification Number)",
-        "PUK (Personal Unblocking Key)",
-        "IMEI (International Mobile Equipment Identity)"
-      ],
-      correct: 0,
-      explanation: "The destination VLR assigns a temporary, geographically routable Mobile Station Roaming Number (MSRN). The recipient's HLR returns this MSRN to the calling MSC so the voice circuit can be routed across transit switches to the destination MSC.",
-      hint: "A temporary, geographically routable phone number assigned by the serving VLR so the switching transit network knows where to forward the call."
-    },
-    {
-      id: 19,
-      category: "🎯 Midterm: Cellular",
-      isMidterm: true,
-      question: "Why do cellular networks divide large geographic areas into small cells rather than using one high-power transmitter?",
-      options: [
-        "To allow frequency channels to be reused multiple times across distant cells, multiplying network capacity and serving millions of users",
-        "Because radio waves can only travel a maximum of 500 meters in air",
-        "Because high-power transmitters cause earthquakes",
-        "To force users to purchase more mobile phones"
-      ],
-      correct: 0,
-      explanation: "Dividing coverage into cells allows frequency reuse: non-adjacent cells reuse the exact same radio channels without mutual interference. This multiplies capacity, enabling operators to serve millions of simultaneous subscribers on a limited slice of radio spectrum.",
-      hint: "Reflect on frequency reuse: small low-power cells enable the exact same radio channels to be reused across non-adjacent clusters without interference."
+      explanation: "Mobile IPv6 completely eliminated the Foreign Agent (FA)! Thanks to Stateless Address Autoconfiguration (SLAAC) and the vast 128-bit address space, any IPv6 mobile node can dynamically configure its own Care-of Address on any foreign network without an FA router.",
+      hint: "In IPv6, mobile devices configure their own Care-of Addresses automatically via SLAAC, making which visiting router entity obsolete?"
     },
     {
       id: 20,
-      category: "🎯 Midterm: Cellular",
+      category: "Mobile IP (L2.4)",
       isMidterm: true,
-      question: "What is the technical difference between 'Handoff' and 'Roaming'?",
+      question: "Why is Network Address Translation (NAT) absent and completely unnecessary in IPv6 networks?",
       options: [
-        "Handoff is between foreign countries; Roaming is within a city",
-        "Handoff seamlessly transfers an active call between adjacent towers without dropping; Roaming allows a device to receive service on a partner operator's network outside home coverage",
-        "Handoff requires restarting the phone; Roaming is automatic",
-        "Handoff is wired; Roaming is wireless"
-      ],
+        "IPv6 routers do not support port numbers",
+        "IPv6 provides an immense 128-bit address space (3.4 x 10^38 IPs), restoring the End-to-End Principle with unique public addresses for every device",
+        "The United Nations legally banned NAT in the year 2020",
+        "IPv6 packets cannot be transmitted across fiber-optic cables"
+],
       correct: 1,
-      explanation: "Handoff (or handover) transfers an active call/session between cell towers as the user physically moves. Roaming allows a user to access cellular service when traveling outside the home operator's coverage area by connecting to a partner carrier's network.",
-      hint: "One keeps an ongoing active call alive as you drive across cell borders; the other permits your device to register on partner carrier networks when away from your home operator."
+      explanation: "NAT was an emergency stopgap created in IPv4 to delay IPv4 address exhaustion. Because IPv6 provides 2^128 (approximately 3.4 x 10^38) unique addresses, every device in the universe can have a globally unique public IP, eliminating the need for NAT and restoring end-to-end communication.",
+      hint: "Focus on the enormous 128-bit address space: with septillions of addresses per person, private IP translation is no longer needed."
     },
-
-    // --- FOUNDATION ITEMS (ITEMS 21 TO 30) ---
     {
       id: 21,
-      category: "Module 1: Foundations",
-      isMidterm: false,
-      question: "Which of the following is NOT one of the 3 fundamental pillars of Mobile Computing?",
+      category: "GSM Architecture (L3.1)",
+      isMidterm: true,
+      question: "What made the commercial deployment of GSM in the early 1990s a pivotal milestone in cellular telecommunications?",
       options: [
-        "Mobile Hardware",
-        "Mobile Software",
-        "Mobile Communication",
-        "Stationary Mainframes"
-      ],
-      correct: 3,
-      explanation: "The 3 pillars of Mobile Computing are Mobile Hardware (portable devices), Mobile Software (constrained operating systems/apps), and Mobile Communication (wireless networks).",
-      hint: "Recall the 3 essential components: Mobile Hardware, Mobile Software, and Mobile Communication."
+        "It introduced touchscreens and web browsers to mobile phones",
+        "It established a standardized digital cellular system that enabled international roaming and introduced the removable SIM card",
+        "It eliminated all telephone wires and replaced them with copper cables",
+        "It required users to purchase a new phone number every month"
+],
+      correct: 1,
+      explanation: "GSM (2G) replaced incompatible analog systems with a unified digital cellular standard. Its key historical innovations included digital voice transmission, subscriber identity separation via the SIM card, standardized international roaming across operators/countries, and SMS text messaging.",
+      hint: "Think of the transition from 1G analog to 2G digital: standardized roaming across European borders and the introduction of the SIM card."
     },
     {
       id: 22,
-      category: "Module 2: Media",
-      isMidterm: false,
-      question: "What physical principle allows Fiber-Optic cables to transmit multi-terabit data over long distances with zero EMI?",
+      category: "GSM Evolution (L3.1)",
+      isMidterm: true,
+      question: "What primary modulation upgrade allowed EDGE (2.75G) to triple the data throughput of GPRS across the same 200 kHz channel?",
       options: [
-        "Total Internal Reflection of light pulses through ultra-pure silica glass",
-        "Electromagnetic induction along copper shielding",
-        "Radio frequency broadcasting inside vacuum tubes",
-        "Atmospheric refraction"
-      ],
+        "Switching from Gaussian Minimum Shift Keying (GMSK, 1 bit/symbol) to 8-Phase Shift Keying (8-PSK, 3 bits/symbol)",
+        "Replacing radio transmission with infrared lasers",
+        "Upgrading the cell tower processors from 16-bit to 64-bit",
+        "Eliminating the Base Station Controller completely"
+],
       correct: 0,
-      explanation: "Fiber-optic cables guide light pulses through a core using Total Internal Reflection at the core-cladding boundary, delivering multi-Tbps bandwidth immune to electrical noise.",
-      hint: "Consider how light rays bounce off the boundary between the inner glass core and outer cladding at an angle greater than the critical angle."
+      explanation: "GPRS uses GMSK modulation, which transmits 1 bit per radio symbol. EDGE introduced 8-PSK (8-Phase Shift Keying), where each symbol carries 3 bits (2^3 = 8). This modulation upgrade mathematically tripled maximum throughput to 384 kbps over the exact same 200 kHz channel.",
+      hint: "Compare 1 bit per symbol in GMSK with phase modulation carrying 3 bits per symbol (2^3 = 8) to reach 384 kbps."
     },
     {
       id: 23,
-      category: "Module 2: Media",
-      isMidterm: false,
-      question: "Which network topology connects all nodes to a central hub/switch, ensuring a single cable fault does not collapse the network?",
+      category: "GSM Architecture (L3.2)",
+      isMidterm: true,
+      question: "In the GSM Base Station Subsystem (BSS), which physical component houses the transceivers (TRX) that communicate directly with mobile stations over the radio air interface?",
       options: [
-        "Bus Topology",
-        "Star Topology",
-        "Ring Topology",
-        "Linear Topology"
-      ],
-      correct: 1,
-      explanation: "In Star Topology, all nodes connect individually to a central switch. If one cable fails, only that single node is disconnected; however, the central switch is a single point of failure.",
-      hint: "All peripheral devices radiate outward from a central point like the rays of a celestial body."
+        "Base Transceiver Station (BTS)",
+        "Home Location Register (HLR)",
+        "Equipment Identity Register (EIR)",
+        "Operation Support Subsystem (OSS)"
+],
+      correct: 0,
+      explanation: "The Base Transceiver Station (BTS) is the physical cell tower equipment containing antennas and transceivers (TRX) that handles direct radio frequency (wireless) communication with mobile stations within a single cell.",
+      hint: "Identify the physical tower station that houses the radio transceivers and antennas in the cell."
     },
     {
       id: 24,
-      category: "Module 2: Media",
-      isMidterm: false,
-      question: "Why do microwave and millimeter-wave wireless links experience severe attenuation during torrential rainfall (Rain Fade)?",
+      category: "GSM Architecture (L3.2)",
+      isMidterm: true,
+      question: "In the GSM network architecture diagram, what is the standardized interface connecting the BTS to the BSC?",
       options: [
-        "Water grounds the radio transmitter",
-        "Raindrop physical dimensions are comparable to signal wavelengths, causing heavy scattering and absorption",
-        "Clouds completely absorb all electromagnetic radiation",
-        "Raindrops cool down the antenna electronics"
-      ],
+        "The Radio Air Interface",
+        "The Abis Interface",
+        "The A Interface",
+        "The USB Interface"
+],
       correct: 1,
-      explanation: "Rain Fade occurs because high-frequency microwaves have wavelengths comparable to raindrop sizes, causing strong scattering, phase distortion, and electromagnetic energy absorption.",
-      hint: "When the wavelength of electromagnetic radiation matches the physical size of falling water droplets, resonance absorption and scattering peak."
+      explanation: "In GSM architecture: The MS connects to the BTS via the Radio Air Interface; the BTS connects to the BSC via the Abis Interface; and the BSC connects to the MSC via the A Interface.",
+      hint: "Remember the three primary interfaces: Air (MS to BTS), Abis (BTS to BSC), and A (BSC to MSC)."
     },
     {
       id: 25,
-      category: "Module 3: Generations",
-      isMidterm: false,
-      question: "Which cellular generation eliminated legacy circuit switching in favor of a 100% all-IP packet-switched architecture?",
+      category: "GSM NSS Subsystem (L3.2)",
+      isMidterm: true,
+      question: "What is the core functional difference between the Home Location Register (HLR) and the Visitor Location Register (VLR)?",
       options: [
-        "1G (AMPS)",
-        "2G (GSM)",
-        "3G (UMTS)",
-        "4G (LTE / VoLTE)"
-      ],
-      correct: 3,
-      explanation: "4G LTE completely eliminated legacy circuit switching, treating all traffic (including voice via VoLTE) as IP packets over a unified high-speed packet-switched core.",
-      hint: "This generation introduced Long Term Evolution (LTE) and transitioned voice calling entirely onto packet-switched IP (VoLTE)."
+        "HLR is inside the phone handset; VLR is mounted on the cell tower",
+        "HLR is the permanent master subscriber database; VLR is a temporary local database caching subscriber profiles currently active in an MSC's territory",
+        "HLR stores text messages; VLR stores voice voicemails",
+        "HLR handles billing for prepaid users; VLR handles postpaid users"
+],
+      correct: 1,
+      explanation: "The Home Location Register (HLR) is the central permanent database holding master subscriber records, assigned plans, and current VLR location pointers. The Visitor Location Register (VLR) temporarily caches subscriber records while they are active in an MSC's service area to avoid constant remote HLR queries.",
+      hint: "One is the permanent central home register; the other is a localized, temporary caching register for currently visiting handsets."
     },
     {
       id: 26,
-      category: "Module 3: 5G",
-      isMidterm: false,
-      question: "Which 5G Network Slice is designed for sub-1 millisecond latency and 99.999% reliability in autonomous vehicles and remote surgery?",
+      category: "GSM NSS Subsystem (L3.2)",
+      isMidterm: true,
+      question: "Which database in the GSM Network and Switching Subsystem (NSS) stores the secret symmetric key (Ki) and generates authentication triplets (RAND, SRES, Kc)?",
       options: [
-        "eMBB (Enhanced Mobile Broadband)",
-        "mMTC (Massive Machine-Type Communications)",
-        "URLLC (Ultra-Reliable Low-Latency Communication)",
-        "SMS"
-      ],
-      correct: 2,
-      explanation: "URLLC provides ultra-low latency (<1 ms) and 99.999% mission-critical reliability for autonomous driving (V2X), industrial automation, and telesurgery.",
-      hint: "Look for the acronym emphasizing extreme reliability and minimal delay, crucial for life-or-death missions."
+        "Authentication Center (AuC)",
+        "Equipment Identity Register (EIR)",
+        "Base Station Controller (BSC)",
+        "Visitor Location Register (VLR)"
+],
+      correct: 0,
+      explanation: "The Authentication Center (AuC) is the security vault in the NSS. It stores the subscriber's secret 128-bit key (Ki) and executes cryptographic algorithms to produce authentication triplets (RAND, SRES, and cipher key Kc) to authenticate SIM cards and encrypt voice calls.",
+      hint: "Look for the security vault that works with the HLR to authenticate mobile subscribers connecting to the cellular network."
     },
     {
       id: 27,
-      category: "Module 3: 5G",
-      isMidterm: false,
-      question: "Which 5G Network Slice supports connecting up to 1,000,000 devices per km² with a 10-year battery life for smart city IoT sensors?",
+      category: "GSM NSS Subsystem (L3.2)",
+      isMidterm: true,
+      question: "What is the role of the Equipment Identity Register (EIR) 'Black List'?",
       options: [
-        "eMBB",
-        "mMTC",
-        "URLLC",
-        "VoLTE"
-      ],
+        "To list subscribers with delinquent unpaid phone bills",
+        "To store hardware IMEIs of stolen, counterfeit, or unauthorized handsets that are strictly banned from accessing the cellular network",
+        "To log telephone numbers that call after midnight",
+        "To identify cell towers scheduled for demolition"
+],
       correct: 1,
-      explanation: "mMTC (Massive Machine-Type Communications) is engineered for dense IoT deployments (1M devices/km²) with ultra-low power consumption for remote battery-operated sensors.",
-      hint: "Notice the massive volume of smart metering and industrial sensor devices rather than high-speed video streaming."
+      explanation: "The EIR maintains hardware equipment records categorized into White (authorized), Gray (monitored), and Black lists. Handsets whose 15-digit IMEI appears on the Black List (reported stolen, barred, or non-certified) are strictly blocked from connecting to the network.",
+      hint: "Remember the 3 EIR lists: the Black List tracks physical hardware serial numbers (IMEI) reported stolen or banned from making calls."
     },
     {
       id: 28,
-      category: "Module 1: Hardware",
-      isMidterm: false,
-      question: "Why do smartphones experience sudden battery drain and unexpected shutdowns in sub-zero freezing weather?",
+      category: "GSM SIM & MS (L3.3)",
+      isMidterm: true,
+      question: "Why is the separation of Mobile Equipment (ME) and the Subscriber Identity Module (SIM) considered a fundamental innovation of GSM?",
       options: [
-        "The phone's screen backlight consumes 10x more power in the dark",
-        "Extreme cold slows down internal electrochemical reaction rates and ion mobility inside Lithium-ion batteries, triggering sudden voltage drop",
-        "Cell towers broadcast negative voltage in the winter",
-        "The CPU fan freezes"
-      ],
+        "It doubles the battery life of the phone by offloading compute to the SIM card",
+        "It decouples the user's subscriber identity and security credentials from the physical device, allowing seamless handset upgrades and international roaming",
+        "It forces users to buy a new phone every time they change cellular operators",
+        "It allows the SIM card to function as an independent FM radio antenna"
+],
       correct: 1,
-      explanation: "Sub-zero cold slows down chemical reaction rates and increases internal electrolyte resistance in Lithium-ion cells, causing sudden voltage drops that force the phone's power management IC to shut down.",
-      hint: "Chemical reaction velocity and internal ionic resistance in Lithium-ion cells are heavily temperature-dependent."
+      explanation: "In 1G networks, identity was locked to the phone hardware. GSM's separation of the Mobile Equipment (hardware) from the SIM card allowed subscribers to move their SIM card\u2014containing their unique IMSI, security credentials, and phonebook\u2014into any compatible handset while preserving their identity and account.",
+      hint: "Think of moving your SIM card into a friend's phone: why is decoupling subscriber identity from the physical handset so powerful?"
     },
     {
       id: 29,
-      category: "Module 2: Design",
-      isMidterm: false,
-      question: "When deploying wireless network infrastructure in an off-grid mountainous remote area, which frequency choice is most effective?",
+      category: "GSM Call & SMS (L3.4)",
+      isMidterm: true,
+      question: "Why are SMS text messages limited to 160 characters in GSM, and why do they not interrupt ongoing phone calls?",
       options: [
-        "60 GHz millimeter waves",
-        "Lower RF bands (700–900 MHz) for superior propagation distance and foliage penetration",
-        "Unshielded twisted pair copper wire strung over 50 miles",
-        "Infrared light beams"
-      ],
+        "Because early microprocessors could only display 160 letters on LCD screens",
+        "Because SMS messages are transmitted over out-of-band signaling channels (using spare capacity) rather than dedicated voice traffic channels",
+        "Because international law restricts mobile text messages to 160 words",
+        "Because text messages must fit inside the handset's SIM card RAM cache"
+],
       correct: 1,
-      explanation: "Lower RF frequencies (sub-1 GHz, e.g. 700–900 MHz) travel significantly further and penetrate terrain obstacles, foliage, and weather far better than high-frequency bands.",
-      hint: "Low frequencies have longer wavelengths, enabling them to travel over vast distances and curve around topography and tree foliage with less path loss."
+      explanation: "SMS text messages (up to 160 characters using 7-bit encoding) were designed to fit within the spare capacity of GSM signaling channels (like SDCCH and SACCH). Because they travel over signaling channels rather than traffic channels, they do not tie up or interrupt voice calls.",
+      hint: "Consider network efficiency: SMS uses small amounts of otherwise unused capacity in the network's signaling system rather than voice channels."
     },
     {
       id: 30,
-      category: "Module 1: Concept",
-      isMidterm: false,
-      question: "Which concise 3-word phrase best encapsulates the foundational definition of Mobile Computing?",
+      category: "GSM Call & SMS (L3.4)",
+      isMidterm: true,
+      question: "When a call is placed to a roaming mobile subscriber, what temporary number does the destination VLR allocate to route the voice call across the transit switching backbone?",
       options: [
-        "Cabled Desktop Station",
-        "Ubiquitous Intelligent Connectivity",
-        "Analog Circuit Switching",
-        "Isolated Local Storage"
-      ],
-      correct: 1,
-      explanation: "Mobile Computing is 'Ubiquitous Intelligent Connectivity' because it provides compute access anywhere (ubiquitous), adapts to user context (intelligent), and bridges devices to the cloud (connectivity).",
-      hint: "Think of computing that is present everywhere, adapts contextually to users, and links seamlessly across networks."
+        "Mobile Station Roaming Number (MSRN)",
+        "Personal Unblocking Key (PUK)",
+        "International Mobile Equipment Identity (IMEI)",
+        "Uniform Resource Locator (URL)"
+],
+      correct: 0,
+      explanation: "When an incoming call arrives for a subscriber, the destination VLR assigns a temporary, geographically routable Mobile Station Roaming Number (MSRN). The HLR returns this MSRN to the calling MSC so the voice circuit can be routed across transit switches to the destination MSC.",
+      hint: "A temporary, geographically routable telephone number assigned by the visited VLR so the switching network can route the incoming call."
     }
   ],
 
