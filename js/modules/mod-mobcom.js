@@ -298,7 +298,58 @@ const MOBCOM_MODULE = (() => {
               <br><code class="font-mono text-[11px] bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded inline-block mt-1">Mobile Station (MS) ➔ Base Transceiver Station (BTS) ➔ Base Station Controller (BSC) ➔ Mobile Switching Center (MSC) ➔ Backbone Network ➔ Destination</code>
             </p>
 
-            <div class="space-y-2 pt-1 text-xs">
+            
+            <!-- Figure 1.1: Simplified Cellular Network Architecture (Module Page 2) -->
+            <div class="p-3.5 sm:p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-500">Figure 1.1 • Architecture Model</span>
+                <span class="text-[10px] font-mono text-zinc-400">Student Edition Page 2</span>
+              </div>
+              
+              <div class="overflow-x-auto pb-1">
+                <div class="min-w-[540px] flex items-center justify-between gap-1.5 text-center text-[11px] font-mono py-1">
+                  <!-- 1. Endpoints -->
+                  <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex-1 space-y-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">Mobile Devices</span>
+                    <span class="text-[10px] text-zinc-500 block">Smartphones • Laptops • Tablets</span>
+                  </div>
+
+                  <div class="text-zinc-400 font-bold shrink-0 text-xs px-1">➔<br><span class="text-[9px] uppercase font-sans">Radio Link</span></div>
+
+                  <!-- 2. RAN -->
+                  <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex-1 space-y-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">Radio Access (RAN)</span>
+                    <span class="text-[10px] text-zinc-500 block">Macro Towers • Rooftops • Small Cells</span>
+                  </div>
+
+                  <div class="text-zinc-400 font-bold shrink-0 text-xs px-1">➔<br><span class="text-[9px] uppercase font-sans">Backhaul</span></div>
+
+                  <!-- 3. Baseband -->
+                  <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex-1 space-y-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">Baseband Unit</span>
+                    <span class="text-[10px] text-zinc-500 block">BBU Signal Processing</span>
+                  </div>
+
+                  <div class="text-zinc-400 font-bold shrink-0 text-xs px-1">➔<br><span class="text-[9px] uppercase font-sans">Fiber/Wire</span></div>
+
+                  <!-- 4. Core -->
+                  <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex-1 space-y-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">Core Network</span>
+                    <span class="text-[10px] text-zinc-500 block">Switching & Routing Elements</span>
+                  </div>
+
+                  <div class="text-zinc-400 font-bold shrink-0 text-xs px-1">➔<br><span class="text-[9px] uppercase font-sans">Gateway</span></div>
+
+                  <!-- 5. Destination -->
+                  <div class="p-2.5 rounded-lg border border-zinc-900 dark:border-zinc-100 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex-1 space-y-1 shadow-sm">
+                    <span class="font-bold block">Internet / PSTN</span>
+                    <span class="text-[10px] opacity-80 block">Voice, Data & Cloud Servers</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+<div class="space-y-2 pt-1 text-xs">
               <span class="font-mono text-[11px] font-bold text-zinc-800 dark:text-zinc-200 block">Architecture Node Hierarchy:</span>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                 <div class="p-2.5 rounded bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/60">
@@ -320,21 +371,93 @@ const MOBCOM_MODULE = (() => {
               </div>
             </div>
 
-            <!-- Frequency Reuse & Handoff vs Roaming -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-              <div class="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 space-y-1 border border-zinc-200/60 dark:border-zinc-800/60">
-                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block text-[11px]">Frequency Reuse Clusters (N=7 Pattern)</span>
-                <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px]">
-                  Cells are organized into repeating clusters (labeled <strong>A through G</strong>). Each cell in a cluster is assigned a unique, non-overlapping frequency set. The entire cluster is then repeated across the region, ensuring cells using the same frequencies are separated by safe physical distance to prevent co-channel interference.
-                </p>
+<!-- Figure 1.2: Frequency Reuse (N=7) & Cellular Handoff (Module Page 3) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
+              <!-- Left: Hexagonal 7-Cell Cluster Pattern -->
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                    <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 text-[11px]">Frequency Reuse (N=7 Cluster)</span>
+                    <span class="text-[10px] font-mono text-zinc-400">Page 3</span>
+                  </div>
+                  <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px] pt-1.5">
+                    Cells are grouped into repeating 7-cell clusters (<strong>A through G</strong>). Each cell in a cluster operates on distinct frequencies. The pattern repeats across the map so identical frequencies are separated by safe distance $D = R\sqrt{3N}$ without co-channel interference.
+                  </p>
+                </div>
+                <div class="pt-2">
+                  <svg viewBox="0 0 210 150" class="w-full max-w-[190px] mx-auto overflow-visible select-none" xmlns="http://www.w3.org/2000/svg">
+  <g><polygon points="123.5,75.0 114.2,91.0 95.8,91.0 86.5,75.0 95.7,59.0 114.2,59.0" class="fill-zinc-900 stroke-zinc-900 dark:fill-zinc-100 dark:stroke-zinc-100" stroke-width="1.5" /><text x="105.0" y="79.0" text-anchor="middle" class="font-mono text-xs fill-white dark:fill-zinc-900 font-bold">G</text></g>
+  <g><polygon points="123.5,40.4 114.2,56.4 95.8,56.4 86.5,40.4 95.7,24.3 114.2,24.3" class="fill-zinc-100 stroke-zinc-300 dark:fill-zinc-800/80 dark:stroke-zinc-700" stroke-width="1.5" /><text x="105.0" y="44.4" text-anchor="middle" class="font-mono text-xs fill-zinc-700 dark:fill-zinc-300">A</text></g>
+  <g><polygon points="153.5,57.7 144.2,73.7 125.8,73.7 116.5,57.7 125.7,41.7 144.2,41.7" class="fill-zinc-100 stroke-zinc-300 dark:fill-zinc-800/80 dark:stroke-zinc-700" stroke-width="1.5" /><text x="135.0" y="61.7" text-anchor="middle" class="font-mono text-xs fill-zinc-700 dark:fill-zinc-300">B</text></g>
+  <g><polygon points="153.5,92.3 144.2,108.3 125.8,108.3 116.5,92.3 125.7,76.3 144.2,76.3" class="fill-zinc-100 stroke-zinc-300 dark:fill-zinc-800/80 dark:stroke-zinc-700" stroke-width="1.5" /><text x="135.0" y="96.3" text-anchor="middle" class="font-mono text-xs fill-zinc-700 dark:fill-zinc-300">C</text></g>
+  <g><polygon points="123.5,109.6 114.2,125.7 95.8,125.7 86.5,109.6 95.7,93.6 114.2,93.6" class="fill-zinc-100 stroke-zinc-300 dark:fill-zinc-800/80 dark:stroke-zinc-700" stroke-width="1.5" /><text x="105.0" y="113.6" text-anchor="middle" class="font-mono text-xs fill-zinc-700 dark:fill-zinc-300">D</text></g>
+  <g><polygon points="93.5,92.3 84.2,108.3 65.8,108.3 56.5,92.3 65.7,76.3 84.2,76.3" class="fill-zinc-100 stroke-zinc-300 dark:fill-zinc-800/80 dark:stroke-zinc-700" stroke-width="1.5" /><text x="75.0" y="96.3" text-anchor="middle" class="font-mono text-xs fill-zinc-700 dark:fill-zinc-300">E</text></g>
+  <g><polygon points="93.5,57.7 84.2,73.7 65.8,73.7 56.5,57.7 65.7,41.7 84.2,41.7" class="fill-zinc-100 stroke-zinc-300 dark:fill-zinc-800/80 dark:stroke-zinc-700" stroke-width="1.5" /><text x="75.0" y="61.7" text-anchor="middle" class="font-mono text-xs fill-zinc-700 dark:fill-zinc-300">F</text></g>
+</svg>
+                  <div class="text-center font-mono text-[10px] text-zinc-400 pt-1">Honeycomb tessellation: 100% gapless coverage</div>
+                </div>
               </div>
 
-              <div class="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 space-y-1 border border-zinc-200/60 dark:border-zinc-800/60">
-                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block text-[11px]">Handoff vs. Roaming</span>
-                <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px]">
-                  <strong>Handoff:</strong> Continuously and seamlessly transfers an active call between adjacent towers within a <em>single operator's network</em> without dropping.<br>
-                  <strong>Roaming:</strong> Allows a subscriber to obtain cellular service on a <em>partner operator's network</em> when traveling outside the home operator's geographic coverage area.
-                </p>
+              <!-- Right: Cellular Handoff Process Diagram -->
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                    <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 text-[11px]">Cellular Handoff (BS1 ➔ BS2)</span>
+                    <span class="text-[10px] font-mono text-zinc-400">Page 3</span>
+                  </div>
+                  <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px] pt-1.5">
+                    As a user moves across the cell border from <strong>Point A to Point B</strong>, signal strength from BS1 diminishes while BS2 strengthens. The BSC triggers an automated handover of the ongoing session to BS2 without call interruption.
+                  </p>
+                </div>
+                
+                <!-- Handoff Visual Illustration -->
+                <div class="p-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/80 space-y-2 my-auto">
+                  <div class="flex items-center justify-between text-center font-mono text-[11px]">
+                    <div class="space-y-0.5">
+                      <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 font-bold block text-zinc-800 dark:text-zinc-200">Base Station 1</span>
+                      <span class="text-[10px] text-zinc-500 block">Cell A (Freq A)</span>
+                    </div>
+                    <div class="flex-1 px-3">
+                      <div class="relative flex items-center justify-center">
+                        <div class="h-0.5 w-full bg-zinc-300 dark:bg-zinc-600"></div>
+                        <span class="absolute px-1.5 py-0.5 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[9px] font-bold">A ➔ B</span>
+                      </div>
+                      <span class="text-[9px] text-zinc-400 block mt-1">Cell Boundary Handover</span>
+                    </div>
+                    <div class="space-y-0.5">
+                      <span class="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 font-bold block text-zinc-800 dark:text-zinc-200">Base Station 2</span>
+                      <span class="text-[10px] text-zinc-500 block">Cell B (Freq B)</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 text-center">
+                  Hard Handoff ("break-before-make") vs. Soft Handoff ("make-before-break")
+                </div>
+              </div>
+            </div>
+
+            <!-- Figure 1.3: International Roaming Mechanism (Module Page 4) -->
+            <div class="p-3.5 sm:p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-2.5">
+              <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-500">Figure 1.3 • International Roaming Architecture</span>
+                <span class="text-[10px] font-mono text-zinc-400">Student Edition Page 4</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1 font-mono">
+                <div class="p-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-1.5">
+                  <span class="font-bold text-zinc-900 dark:text-zinc-100 block text-[11px]">Customer's Home Country</span>
+                  <div class="text-[10px] text-zinc-500 space-y-1 font-sans">
+                    <p>• <strong>Home Mobile Operator:</strong> Maintains permanent subscriber account, billing profile, and SIM identity.</p>
+                    <p>• <strong>Wholesale Settlement:</strong> Compensates the visited foreign operator for network resource usage.</p>
+                  </div>
+                </div>
+                <div class="p-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-1.5">
+                  <span class="font-bold text-zinc-900 dark:text-zinc-100 block text-[11px]">Visited Foreign Country</span>
+                  <div class="text-[10px] text-zinc-500 space-y-1 font-sans">
+                    <p>• <strong>Foreign Mobile Operator:</strong> Detects roaming customer, verifies identity via home network, and provides local radio coverage.</p>
+                    <p>• <strong>Retail Billing:</strong> End-user subscriber pays their home provider for international roaming service.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -510,6 +633,75 @@ const MOBCOM_MODULE = (() => {
               </p>
             </div>
 
+            
+            <!-- Figure 2.1 & 2.2: Packet Switching Mesh and NAT Architecture (Module Pages 7 & 8) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
+              <!-- Figure 2.1: Packet Switching & Store-and-Forward Mesh (Page 7) -->
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                    <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 text-[11px]">Figure 2.1 • Packet Switching Mesh</span>
+                    <span class="text-[10px] font-mono text-zinc-400">Page 7</span>
+                  </div>
+                  <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px] pt-1.5">
+                    Rather than a dedicated circuit, packets travel independently over store-and-forward mesh nodes:
+                    <br><strong class="font-mono text-[10px]">Message 1: Path A ➔ B ➔ E</strong> | <strong class="font-mono text-[10px]">Message 2: Path C ➔ D ➔ E</strong>.
+                  </p>
+                </div>
+
+                <div class="p-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-center font-mono text-[10px] space-y-2 my-auto">
+                  <div class="flex items-center justify-between px-1">
+                    <span class="px-2 py-1 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold">Sender</span>
+                    <div class="flex-1 px-2 space-y-1">
+                      <div class="text-[9px] text-zinc-500">Path 1: Node A ➔ Node B ➔ Node E</div>
+                      <div class="h-0.5 bg-zinc-300 dark:bg-zinc-600 w-full"></div>
+                      <div class="text-[9px] text-zinc-500">Path 2: Node C ➔ Node D ➔ Node E</div>
+                    </div>
+                    <span class="px-2 py-1 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold">Receiver</span>
+                  </div>
+                  <div class="text-[9px] text-zinc-400 italic">Packets dynamically routed around congestion and reassembled in sequence</div>
+                </div>
+
+                <div class="text-[10px] font-mono text-zinc-400 text-center">Store-and-forward switches dynamically balance line load</div>
+              </div>
+
+              <!-- Figure 2.2: NAT Gateway & Private Subnet (Page 8) -->
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                    <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 text-[11px]">Figure 2.2 • NAT Gateway Model</span>
+                    <span class="text-[10px] font-mono text-zinc-400">Page 8</span>
+                  </div>
+                  <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px] pt-1.5">
+                    RFC 1918 Private IP devices share one public IP address via Network Address Translation (NAT), conserving IPv4 space while isolating local endpoints.
+                  </p>
+                </div>
+
+                <div class="p-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-1.5 my-auto font-mono text-[10px]">
+                  <div class="flex items-center justify-between">
+                    <div class="text-left space-y-0.5 text-zinc-500">
+                      <div>📱 192.168.1.1</div>
+                      <div>💻 192.168.1.2</div>
+                      <div>🖥️ 192.168.1.3</div>
+                      <div>📟 192.168.1.4</div>
+                    </div>
+                    <div class="text-center px-2">
+                      <span class="font-bold text-zinc-900 dark:text-zinc-100 block">NAT Router</span>
+                      <span class="text-zinc-400 text-[9px] block">➔ Port Mapping ➔</span>
+                      <span class="text-[9px] px-1 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200">82.129.80.111</span>
+                    </div>
+                    <div class="text-right space-y-0.5">
+                      <span class="px-2 py-1 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold block">🌐 Web</span>
+                      <span class="text-[9px] text-zinc-400 block">Public Internet</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="text-[10px] font-mono text-zinc-400 text-center">4 local devices ➔ 1 globally routable public IPv4 address</div>
+              </div>
+            </div>
+
+
             <!-- Home Address vs Care-of Address -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
               <div class="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/60 dark:border-zinc-800/60 space-y-1">
@@ -528,6 +720,86 @@ const MOBCOM_MODULE = (() => {
           </div>
 
           <!-- 2.3 TCP/IP Suite & Complete 11-Point TCP vs UDP Matrix -->
+          
+            <!-- Figure 2.3 & 2.4: OSI vs TCP/IP Mapping & Handshake Models (Module Pages 9 & 10) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs">
+              <!-- Figure 2.3: OSI 7-Layer to TCP/IP 4-Layer Mapping -->
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                    <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 text-[11px]">Figure 2.3 • OSI to TCP/IP Mapping</span>
+                    <span class="text-[10px] font-mono text-zinc-400">Page 9</span>
+                  </div>
+                  <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px] pt-1">
+                    The 7 OSI layers condense into the practical 4-layer TCP/IP architectural model:
+                  </p>
+                </div>
+
+                <div class="space-y-1.5 font-mono text-[10px] my-auto">
+                  <div class="flex items-center gap-1.5">
+                    <span class="p-1.5 rounded bg-zinc-200 dark:bg-zinc-800 flex-1 text-center font-bold text-zinc-700 dark:text-zinc-300">Application • Presentation • Session</span>
+                    <span class="text-zinc-400">➔</span>
+                    <span class="p-1.5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex-1 text-center font-bold">Application Layer</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="p-1.5 rounded bg-zinc-200 dark:bg-zinc-800 flex-1 text-center font-bold text-zinc-700 dark:text-zinc-300">Transport Layer (L4)</span>
+                    <span class="text-zinc-400">➔</span>
+                    <span class="p-1.5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex-1 text-center font-bold">Transport Layer</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="p-1.5 rounded bg-zinc-200 dark:bg-zinc-800 flex-1 text-center font-bold text-zinc-700 dark:text-zinc-300">Network Layer (L3)</span>
+                    <span class="text-zinc-400">➔</span>
+                    <span class="p-1.5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex-1 text-center font-bold">Internet Layer (IP)</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="p-1.5 rounded bg-zinc-200 dark:bg-zinc-800 flex-1 text-center font-bold text-zinc-700 dark:text-zinc-300">Data Link + Physical (L2/L1)</span>
+                    <span class="text-zinc-400">➔</span>
+                    <span class="p-1.5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex-1 text-center font-bold">Network Access Layer</span>
+                  </div>
+                </div>
+
+                <div class="text-[10px] font-mono text-zinc-400 text-center">Strict modular abstraction allows upper layers to ignore RF physics</div>
+              </div>
+
+              <!-- Figure 2.4: TCP 3-Way Handshake vs UDP Datagram Protocol -->
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                    <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 text-[11px]">Figure 2.4 • TCP vs. UDP Transmission</span>
+                    <span class="text-[10px] font-mono text-zinc-400">Page 10</span>
+                  </div>
+                  <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px] pt-1">
+                    Visual contrast of reliable connection establishment vs connectionless datagram streaming:
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-[10px] font-mono my-auto">
+                  <div class="p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-1 text-center">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block border-b border-zinc-200 dark:border-zinc-700 pb-1">TCP (Handshake)</span>
+                    <div class="space-y-0.5 text-zinc-600 dark:text-zinc-300 pt-1 text-[9px]">
+                      <div>Client ➔ <strong class="text-zinc-900 dark:text-zinc-100">SYN</strong> ➔ Server</div>
+                      <div>Client ⬅️ <strong class="text-zinc-900 dark:text-zinc-100">SYN-ACK</strong> ⬅️ Server</div>
+                      <div>Client ➔ <strong class="text-zinc-900 dark:text-zinc-100">ACK</strong> ➔ Server</div>
+                    </div>
+                    <span class="text-[9px] text-zinc-400 block pt-1">Connection Established</span>
+                  </div>
+
+                  <div class="p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-1 text-center">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block border-b border-zinc-200 dark:border-zinc-700 pb-1">UDP (Datagram)</span>
+                    <div class="space-y-0.5 text-zinc-600 dark:text-zinc-300 pt-1 text-[9px]">
+                      <div>Client ➔ <strong class="text-zinc-900 dark:text-zinc-100">Request</strong> ➔ Server</div>
+                      <div>Client ⬅️ <strong class="text-zinc-900 dark:text-zinc-100">Response</strong> ⬅️ Server</div>
+                      <div class="text-zinc-400 italic">No ACKs • No State</div>
+                    </div>
+                    <span class="text-[9px] text-zinc-400 block pt-1">Zero Handshake Delay</span>
+                  </div>
+                </div>
+
+                <div class="text-[10px] font-mono text-zinc-400 text-center">TCP trades latency for reliability; UDP trades reliability for real-time speed</div>
+              </div>
+            </div>
+
+
           <div class="ios-inset-card overflow-hidden text-xs">
             <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between">
               <div>
@@ -645,6 +917,52 @@ const MOBCOM_MODULE = (() => {
               </div>
             </div>
 
+            
+            <!-- Figure 2.5: Mobile IP Triangular Routing & Tunneling Architecture (Module Page 13) -->
+            <div class="p-3.5 sm:p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-2.5">
+              <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-500">Figure 2.5 • Mobile IP Triangular Routing Architecture</span>
+                <span class="text-[10px] font-mono text-zinc-400">Student Edition Page 13</span>
+              </div>
+              
+              <div class="p-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-3 font-mono text-[11px]">
+                <!-- Topology Schematic -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
+                  <!-- Home Network -->
+                  <div class="p-2.5 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/60 space-y-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">Home Network (HN)</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold block">Home Agent (HA)</span>
+                    <span class="text-[9px] text-zinc-500 block">Intercepts via Proxy ARP</span>
+                  </div>
+
+                  <!-- The Internet Cloud / Tunnel -->
+                  <div class="p-2.5 rounded border border-dashed border-zinc-300 dark:border-zinc-700 flex flex-col justify-center items-center space-y-1">
+                    <span class="font-bold text-zinc-800 dark:text-zinc-200 block text-[10px]">THE INTERNET</span>
+                    <span class="text-[9px] px-2 py-0.5 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold">IP-in-IP Encapsulation Tunnel</span>
+                    <span class="text-[9px] text-zinc-500">HA forwards to Care-of Address (CoA)</span>
+                  </div>
+
+                  <!-- Foreign Network -->
+                  <div class="p-2.5 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/60 space-y-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">Foreign Network (FN)</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold block">Foreign Agent (FA)</span>
+                    <span class="text-[9px] text-zinc-500 block">Decapsulates & Delivers to MN</span>
+                  </div>
+                </div>
+
+                <!-- 4 Step Callout Flow -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-sans pt-1">
+                  <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-900/40 text-zinc-600 dark:text-zinc-400">
+                    <strong>1. Forward Leg (Triangular):</strong> Correspondent Node (CN) sends packets to Mobile Node's permanent Home Address. HA intercepts them and tunnels across the internet to FA.
+                  </div>
+                  <div class="p-2 rounded bg-zinc-50 dark:bg-zinc-900/40 text-zinc-600 dark:text-zinc-400">
+                    <strong>2. Reverse Leg (Direct or Reverse Tunnel):</strong> MN sends replies directly to CN with Source IP = Home Address (or via Reverse Tunneling RFC 3024 to bypass firewall ingress filtering).
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
             <!-- Mobile IP Workflow & Reverse Tunneling -->
             <div class="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-800/60 space-y-1.5 text-[11px]">
               <strong class="font-mono text-zinc-900 dark:text-zinc-100 block">The Mobile IP Process:</strong>
@@ -655,6 +973,55 @@ const MOBCOM_MODULE = (() => {
                 <strong>4. Reverse Tunneling (RFC 3024):</strong> Foreign border firewalls enforce <em>Ingress Filtering</em>, dropping packets whose Source IP does not match the foreign subnet. Reverse Tunneling tunnels outgoing packets back to the HA to pass ingress checks.
               </p>
             </div>
+
+            
+            <!-- Figure 2.6: IPv4 vs. IPv6 Addressing Structure (Module Pages 13 & 14) -->
+            <div class="p-3.5 sm:p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-2.5">
+              <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-500">Figure 2.6 • IPv4 vs. IPv6 Structure Model</span>
+                <span class="text-[10px] font-mono text-zinc-400">Student Edition Pages 13–14</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                <!-- IPv4 Structure -->
+                <div class="p-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 text-[11px]">IPv4: 32 Bits (4 Octets)</span>
+                    <span class="text-[10px] text-zinc-400">2^32 addresses</span>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-100 dark:bg-zinc-900 text-center font-bold text-zinc-800 dark:text-zinc-200 text-xs">
+                    185 . 107 . 80 . 231
+                  </div>
+                  <div class="grid grid-cols-4 gap-1 text-[9px] text-center text-zinc-500">
+                    <div class="p-1 rounded bg-zinc-50 dark:bg-zinc-800/50">Octet 1<br>(8 bits)</div>
+                    <div class="p-1 rounded bg-zinc-50 dark:bg-zinc-800/50">Octet 2<br>(8 bits)</div>
+                    <div class="p-1 rounded bg-zinc-50 dark:bg-zinc-800/50">Octet 3<br>(8 bits)</div>
+                    <div class="p-1 rounded bg-zinc-50 dark:bg-zinc-800/50">Octet 4<br>(8 bits)</div>
+                  </div>
+                  <p class="text-[10px] font-sans text-zinc-500 dark:text-zinc-400 leading-normal">
+                    Exhausted in 2011; dependent on NAT and add-on Mobile IP foreign agents for mobility.
+                  </p>
+                </div>
+
+                <!-- IPv6 Structure -->
+                <div class="p-3 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 text-[11px]">IPv6: 128 Bits (8 Hex Fields)</span>
+                    <span class="text-[10px] text-zinc-400">2^128 addresses</span>
+                  </div>
+                  <div class="p-2 rounded bg-zinc-100 dark:bg-zinc-900 text-center font-bold text-zinc-800 dark:text-zinc-200 text-[11px] truncate">
+                    2001:0dc8:e004:0001:0000:0000:0000:f00a
+                  </div>
+                  <div class="p-1.5 rounded bg-zinc-50 dark:bg-zinc-800/50 text-center text-[10px] text-zinc-600 dark:text-zinc-400 font-sans">
+                    Zero-Compressed Format: <code class="font-mono font-bold text-zinc-900 dark:text-zinc-100">2001:dc8:e004:1::f00a</code>
+                  </div>
+                  <p class="text-[10px] font-sans text-zinc-500 dark:text-zinc-400 leading-normal">
+                    Eliminates NAT; natively integrates mobility via SLAAC (Stateless Address Autoconfiguration).
+                  </p>
+                </div>
+              </div>
+            </div>
+
 
             <!-- Complete IPv4 vs IPv6 Summary Table from Module -->
             <div class="border border-zinc-200/80 dark:border-zinc-800 rounded-xl overflow-hidden text-[11px]">
@@ -729,19 +1096,66 @@ const MOBCOM_MODULE = (() => {
               <strong>What is GSM?</strong> GSM is a digital cellular network standard developed in the late 1980s and deployed in the early 1990s as the definitive 2G mobile standard worldwide. GSM established a common digital standard that enabled international roaming across different countries and network operators, replacing incompatible analog networks.
             </p>
 
-            <!-- Evolution 3-Step Trajectory -->
-            <div class="divide-y divide-zinc-200/80 dark:divide-zinc-800 border border-zinc-200/80 dark:border-zinc-800 rounded-xl overflow-hidden">
-              <div class="p-3 bg-white dark:bg-zinc-900">
-                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block">GSM (2G) — Voice & SMS Foundation</span>
-                <span class="text-zinc-500 text-[11px] block mt-0.5">Circuit-switched voice, SMS text messaging, subscriber authentication via SIM, 9.6 kbps data.</span>
+<!-- Figure 3.1: Generational Progression & GSM Evolution Tree (Module Page 16) -->
+            <div class="p-3.5 sm:p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-3">
+              <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-500">Figure 3.1 • Generational Evolution & 2G Family Tree</span>
+                <span class="text-[10px] font-mono text-zinc-400">Student Edition Page 16</span>
               </div>
-              <div class="p-3 bg-white dark:bg-zinc-900">
-                <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 block">GPRS (2.5G) — Packet-Switched Mobile Data</span>
-                <span class="text-zinc-500 text-[11px] block mt-0.5">General Packet Radio Service introduced packet switching. Billed by data volume, reaching up to 114 kbps for web, email, and MMS.</span>
+
+              <!-- Main Generational Timeline -->
+              <div class="overflow-x-auto pb-1">
+                <div class="min-w-[500px] flex items-center justify-between gap-1.5 text-center font-mono text-[11px]">
+                  <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">1G</span>
+                    <span class="text-[10px] text-zinc-500 block">Analog Voice</span>
+                  </div>
+                  <span class="text-zinc-400 font-bold">➔</span>
+                  <div class="p-2.5 rounded-lg border-2 border-zinc-900 dark:border-zinc-100 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex-1 shadow-sm">
+                    <span class="font-bold block">GSM (2G)</span>
+                    <span class="text-[10px] opacity-80 block">Digital Voice + SMS</span>
+                  </div>
+                  <span class="text-zinc-400 font-bold">➔</span>
+                  <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">3G</span>
+                    <span class="text-[10px] text-zinc-500 block">Mobile Web/MMS</span>
+                  </div>
+                  <span class="text-zinc-400 font-bold">➔</span>
+                  <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">4G LTE</span>
+                    <span class="text-[10px] text-zinc-500 block">All-IP Broadband</span>
+                  </div>
+                  <span class="text-zinc-400 font-bold">➔</span>
+                  <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 flex-1">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100 block">5G</span>
+                    <span class="text-[10px] text-zinc-500 block">eMBB / mMTC / URLLC</span>
+                  </div>
+                </div>
               </div>
-              <div class="p-3 bg-zinc-50 dark:bg-zinc-850">
-                <span class="font-mono font-bold text-amber-800 dark:text-amber-300 block">EDGE (2.75G) — Enhanced Data rates for GSM Evolution</span>
-                <span class="text-zinc-600 dark:text-zinc-400 text-[11px] block mt-0.5">Upgraded modulation from GMSK (1 bit/symbol) to <strong>8-PSK (3 bits/symbol)</strong>, tripling speeds to 384 kbps over existing 200 kHz channels using Adaptive Modulation & Coding (AMC).</span>
+
+              <!-- 2G Enhancements Branch Stack (Cohesive Monochrome Styling - Fixes Color Anomaly) -->
+              <div class="divide-y divide-zinc-200/80 dark:divide-zinc-800 border border-zinc-200/80 dark:border-zinc-800 rounded-xl overflow-hidden font-sans">
+                <div class="p-3 bg-white dark:bg-zinc-900">
+                  <div class="flex items-center justify-between font-mono text-xs">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100">GSM (2G) — Voice & SMS Foundation</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">9.6 kbps</span>
+                  </div>
+                  <p class="text-zinc-500 dark:text-zinc-400 text-[11px] mt-1">Circuit-switched voice, SMS text messaging (160 characters), subscriber authentication via smart card (SIM), and international roaming across operators.</p>
+                </div>
+                <div class="p-3 bg-white dark:bg-zinc-900">
+                  <div class="flex items-center justify-between font-mono text-xs">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100">GPRS (2.5G) — Packet-Switched Mobile Data</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">Up to 114 kbps</span>
+                  </div>
+                  <p class="text-zinc-500 dark:text-zinc-400 text-[11px] mt-1">General Packet Radio Service introduced packet switching over existing GSM radio channels. Enabled "always-on" mobile internet, email, and billing by transmitted data volume rather than airtime.</p>
+                </div>
+                <div class="p-3 bg-white dark:bg-zinc-900">
+                  <div class="flex items-center justify-between font-mono text-xs">
+                    <span class="font-bold text-zinc-900 dark:text-zinc-100">EDGE (2.75G) — Enhanced Data rates for GSM Evolution</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-bold">Up to 384 kbps</span>
+                  </div>
+                  <p class="text-zinc-500 dark:text-zinc-400 text-[11px] mt-1">Upgraded modulation from GMSK (1 bit/symbol) to <strong>8-PSK (3 bits/symbol)</strong>, tripling data throughput over standard 200 kHz channels without requiring new spectrum or cell towers.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -750,6 +1164,91 @@ const MOBCOM_MODULE = (() => {
           <div class="ios-inset-card p-4 sm:p-5 space-y-3.5 text-xs">
             <div class="space-y-1">
               <span class="font-mono text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Lesson 3.2</span>
+
+
+            <!-- Figure 3.2: GSM Network Architecture & Interface Schematic (Module Page 18) -->
+            <div class="p-3.5 sm:p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-3 font-mono text-[11px]">
+              <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-500">Figure 3.2 • Complete GSM 4-Subsystem Architecture Model</span>
+                <span class="text-[10px] font-mono text-zinc-400">Student Edition Page 18</span>
+              </div>
+
+              <!-- 4 Subsystems Architecture Flow -->
+              <div class="overflow-x-auto pb-1">
+                <div class="min-w-[620px] space-y-2.5">
+                  <!-- Top Row: Functional Network Flow -->
+                  <div class="flex items-stretch justify-between gap-2 text-center">
+                    <!-- 1. MS Subsystem -->
+                    <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 w-[120px] space-y-1">
+                      <span class="font-bold text-zinc-900 dark:text-zinc-100 block">Mobile Station</span>
+                      <div class="text-[9px] text-zinc-500 space-y-0.5">
+                        <div>ME (Handset)</div>
+                        <div>+ SIM Card</div>
+                      </div>
+                    </div>
+
+                    <div class="flex flex-col justify-center text-zinc-400 text-[10px] font-bold px-1">
+                      <span>➔</span>
+                      <span class="text-[8px] uppercase">Um (Air)</span>
+                    </div>
+
+                    <!-- 2. BSS: BTS -->
+                    <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 w-[110px] space-y-1">
+                      <span class="font-bold text-zinc-900 dark:text-zinc-100 block">BTS Towers</span>
+                      <span class="text-[9px] text-zinc-500 block">Radio RF Cells & Transceivers</span>
+                    </div>
+
+                    <div class="flex flex-col justify-center text-zinc-400 text-[10px] font-bold px-1">
+                      <span>➔</span>
+                      <span class="text-[8px] uppercase">Abis Link</span>
+                    </div>
+
+                    <!-- 2. BSS: BSC -->
+                    <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 w-[120px] space-y-1">
+                      <span class="font-bold text-zinc-900 dark:text-zinc-100 block">Base Station Ctrl</span>
+                      <span class="text-[9px] text-zinc-500 block">Channel Alloc & Handoffs</span>
+                    </div>
+
+                    <div class="flex flex-col justify-center text-zinc-400 text-[10px] font-bold px-1">
+                      <span>➔</span>
+                      <span class="text-[8px] uppercase">A Interface</span>
+                    </div>
+
+                    <!-- 3. NSS: MSC -->
+                    <div class="p-2.5 rounded-lg border-2 border-zinc-900 dark:border-zinc-100 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 w-[130px] space-y-1 shadow-sm">
+                      <span class="font-bold block">Mobile Switch</span>
+                      <span class="text-[9px] opacity-80 block">MSC Exchange & Gateway</span>
+                    </div>
+
+                    <div class="flex flex-col justify-center text-zinc-400 text-[10px] font-bold px-1">
+                      <span>➔</span>
+                      <span class="text-[8px] uppercase">PSTN/ISDN</span>
+                    </div>
+
+                    <!-- 4. Destination -->
+                    <div class="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 w-[110px] space-y-1">
+                      <span class="font-bold text-zinc-900 dark:text-zinc-100 block">Landline / Web</span>
+                      <span class="text-[9px] text-zinc-500 block">Fixed Networks & Internet</span>
+                    </div>
+                  </div>
+
+                  <!-- Middle Row: NSS Database Cluster (HLR, VLR, AUC, EIR) -->
+                  <div class="p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 flex items-center justify-around text-center text-[10px]">
+                    <span class="font-bold text-zinc-500 uppercase tracking-wider text-[9px]">NSS Databases:</span>
+                    <div><strong class="text-zinc-900 dark:text-zinc-100">HLR:</strong> <span class="text-zinc-500">Permanent Profile</span></div>
+                    <div><strong class="text-zinc-900 dark:text-zinc-100">VLR:</strong> <span class="text-zinc-500">Temporary Roamer</span></div>
+                    <div><strong class="text-zinc-900 dark:text-zinc-100">AUC:</strong> <span class="text-zinc-500">Auth & Ki Keys</span></div>
+                    <div><strong class="text-zinc-900 dark:text-zinc-100">EIR:</strong> <span class="text-zinc-500">IMEI Hardware Check</span></div>
+                  </div>
+
+                  <!-- Bottom Row: OSS / OMC Supervisory System -->
+                  <div class="p-2 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-center text-[10px] text-zinc-600 dark:text-zinc-400">
+                    <strong class="font-bold text-zinc-900 dark:text-zinc-100">Operation & Maintenance Center (OMC / OSS):</strong> Supervises alarm management, software updates, and billing across all BSC and MSC nodes.
+                  </div>
+                </div>
+              </div>
+            </div>
+
               <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
                 GSM Network Architecture: 4 Subsystems
               </h3>
@@ -821,6 +1320,42 @@ const MOBCOM_MODULE = (() => {
           <div class="ios-inset-card p-4 sm:p-5 space-y-3.5 text-xs">
             <div class="space-y-1">
               <span class="font-mono text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Lesson 3.3</span>
+
+
+            <!-- Figure 3.3: SIM Card Form Factors Timeline & Evolution (Module Page 19) -->
+            <div class="p-3.5 sm:p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-2.5">
+              <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-500">Figure 3.3 • SIM Physical & Digital Form Factor Evolution</span>
+                <span class="text-[10px] font-mono text-zinc-400">Student Edition Page 19</span>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center font-mono text-[10px]">
+                <div class="p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-1">
+                  <span class="font-bold text-zinc-900 dark:text-zinc-100 block">2FF (Mini-SIM)</span>
+                  <span class="text-[9px] text-zinc-500 block">25 × 15 mm</span>
+                  <span class="text-[9px] text-zinc-400 block font-sans">Introduced 1996</span>
+                </div>
+                <div class="p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-1">
+                  <span class="font-bold text-zinc-900 dark:text-zinc-100 block">3FF (Micro-SIM)</span>
+                  <span class="text-[9px] text-zinc-500 block">15 × 12 mm</span>
+                  <span class="text-[9px] text-zinc-400 block font-sans">Introduced 2003</span>
+                </div>
+                <div class="p-2.5 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 space-y-1">
+                  <span class="font-bold text-zinc-900 dark:text-zinc-100 block">4FF (Nano-SIM)</span>
+                  <span class="text-[9px] text-zinc-500 block">12.3 × 8.8 mm</span>
+                  <span class="text-[9px] text-zinc-400 block font-sans">Introduced 2012</span>
+                </div>
+                <div class="p-2.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border border-zinc-900 dark:border-zinc-100 space-y-1 shadow-sm">
+                  <span class="font-bold block">eSIM (MFF2)</span>
+                  <span class="text-[9px] opacity-80 block">6 × 5 mm (Chip)</span>
+                  <span class="text-[9px] opacity-70 block font-sans">Rewritable Profile</span>
+                </div>
+              </div>
+              <p class="text-[11px] font-sans text-zinc-500 dark:text-zinc-400 leading-relaxed text-center pt-1">
+                Decoupling the <strong>Subscriber Identity</strong> from the handset hardware allows subscribers to change phones, upgrade hardware, and roam globally while retaining their phone number and subscription profile.
+              </p>
+            </div>
+
               <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
                 Mobile Station & Subscriber Identity Module (SIM)
               </h3>
@@ -1202,7 +1737,7 @@ const MOBCOM_MODULE = (() => {
 
         <!-- Exam Completion Banner (When all items answered) -->
         ${isExamComplete ? `
-          <div class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-850 space-y-3 animate-fade-in">
+          <div class="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 space-y-3 animate-fade-in">
             <div class="flex items-center justify-between">
               <div>
                 <span class="font-mono text-[10px] uppercase font-bold tracking-wider text-zinc-400 block">Exam Complete</span>
@@ -1277,7 +1812,7 @@ const MOBCOM_MODULE = (() => {
 
           <!-- Concept Analysis (Shown once answered) -->
           ${isAnswered ? `
-            <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-850 border border-zinc-200/80 dark:border-zinc-800 text-xs space-y-1 animate-fade-in">
+            <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 text-xs space-y-1 animate-fade-in">
               <span class="font-mono text-[10px] uppercase text-zinc-400 block font-bold">Concept Analysis</span>
               <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed text-[11px] sm:text-xs font-sans">${q.explanation}</p>
             </div>
