@@ -79,6 +79,25 @@ body {
   transform: rotateY(180deg);
 }
 
+.flashcard-front,
+.flashcard-back {
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.flashcard-body-scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 220px;
+}
+
+@media (min-width: 640px) {
+  .flashcard-body-scroll {
+    max-height: 245px;
+  }
+}
+
+
 /* ==========================================
    INTERACTIVE TIMELINE STYLES
    ========================================== */

@@ -973,35 +973,41 @@ const MOBCOM_MODULE = (() => {
         
         <!-- Filter Bar (Touch-friendly horizontal scroll) -->
         <div class="flex items-center justify-between gap-1 overflow-x-auto py-1 text-xs font-mono">
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1 shrink-0">
             <button
               onclick="MOBCOM_MODULE.onFilterCards('midterm-all')"
               class="px-2.5 py-1.5 rounded-lg text-xs font-medium ${state.selectedCategory === 'midterm-all' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
             >
-              Midterm (24)
+              Midterm (34)
+            </button>
+            <button
+              onclick="MOBCOM_MODULE.onFilterCards('midterm-cell')"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-medium ${state.selectedCategory === 'midterm-cell' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
+            >
+              Cellular (10)
             </button>
             <button
               onclick="MOBCOM_MODULE.onFilterCards('midterm-lip')"
               class="px-2.5 py-1.5 rounded-lg text-xs font-medium ${state.selectedCategory === 'midterm-lip' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
             >
-              Mobile IP
+              Mobile IP (12)
             </button>
             <button
               onclick="MOBCOM_MODULE.onFilterCards('midterm-gsm')"
               class="px-2.5 py-1.5 rounded-lg text-xs font-medium ${state.selectedCategory === 'midterm-gsm' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
             >
-              GSM
+              GSM (12)
             </button>
             <button
               onclick="MOBCOM_MODULE.onFilterCards('all')"
               class="px-2.5 py-1.5 rounded-lg text-xs font-medium ${state.selectedCategory === 'all' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}"
             >
-              All (28)
+              All (38)
             </button>
           </div>
           <button
             onclick="MOBCOM_MODULE.shuffleCards()"
-            class="px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 text-xs shrink-0"
+            class="px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 text-xs shrink-0"
           >
             Shuffle
           </button>
@@ -1024,16 +1030,16 @@ const MOBCOM_MODULE = (() => {
             <div
               id="mob-flashcard-flipper"
               onclick="MOBCOM_MODULE.toggleFlip()"
-              class="flashcard ${state.isCardFlipped ? 'flipped' : ''} cursor-pointer min-h-[300px] sm:min-h-[320px]"
+              class="flashcard ${state.isCardFlipped ? 'flipped' : ''} cursor-pointer min-h-[340px] sm:min-h-[360px]"
             >
-              <div class="flashcard-inner transform-style-3d relative w-full h-full min-h-[300px] sm:min-h-[320px]">
+              <div class="flashcard-inner transform-style-3d relative w-full h-full min-h-[340px] sm:min-h-[360px]">
                 <!-- Front -->
-                <div class="flashcard-front backface-hidden absolute inset-0 p-6 rounded-2xl ios-inset-card flex flex-col justify-between shadow-sm">
+                <div class="flashcard-front backface-hidden absolute inset-0 p-5 sm:p-6 rounded-2xl ios-inset-card flex flex-col justify-between shadow-sm overflow-hidden">
                   <div class="flex items-center justify-between text-[11px] font-mono text-zinc-400">
                     <span>${card.categoryName}</span>
                     <span>Tap to reveal</span>
                   </div>
-                  <div class="my-auto py-2 text-center">
+                  <div class="my-auto py-2 text-center overflow-y-auto max-h-[220px] sm:max-h-[245px] pr-1 flashcard-body-scroll">
                     <h3 class="text-base sm:text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
                       ${card.front}
                     </h3>
@@ -1044,18 +1050,18 @@ const MOBCOM_MODULE = (() => {
                 </div>
 
                 <!-- Back -->
-                <div class="flashcard-back backface-hidden rotate-y-180 absolute inset-0 p-6 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 flex flex-col justify-between shadow-lg">
+                <div class="flashcard-back backface-hidden rotate-y-180 absolute inset-0 p-5 sm:p-6 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 flex flex-col justify-between shadow-lg overflow-hidden">
                   <div class="flex items-center justify-between text-[11px] font-mono opacity-60">
                     <span>${card.categoryName}</span>
-                    <span>Answer</span>
+                    <span>Answer • Tap to flip</span>
                   </div>
-                  <div class="my-auto py-2">
-                    <p class="text-xs sm:text-sm leading-relaxed text-zinc-200 dark:text-zinc-800">
+                  <div class="my-auto py-2 overflow-y-auto max-h-[220px] sm:max-h-[245px] pr-1.5 custom-scrollbar flashcard-body-scroll text-left">
+                    <div class="text-xs sm:text-[13px] leading-relaxed text-zinc-200 dark:text-zinc-800 space-y-1.5 font-sans">
                       ${card.back}
-                    </p>
+                    </div>
                   </div>
-                  <div class="text-center text-[10px] font-mono opacity-60">
-                    ${card.mnemonic ? 'Mnemonic: ' + card.mnemonic : ''}
+                  <div class="text-center text-[10px] font-mono opacity-70 pt-1.5 border-t border-zinc-800 dark:border-zinc-200/50 truncate">
+                    ${card.mnemonic ? 'Mnemonic: ' + card.mnemonic : 'BatStateU CICS Reviewer'}
                   </div>
                 </div>
               </div>
@@ -1084,7 +1090,7 @@ const MOBCOM_MODULE = (() => {
         <!-- Nav Stepper -->
         <div class="flex items-center justify-between text-xs font-mono text-zinc-400 pt-1">
           <button onclick="MOBCOM_MODULE.prevCard()" class="px-3 py-1.5 touch-target flex items-center">‹ Prev Card</button>
-          <span>Swipe or Space to flip</span>
+          <span>Tap card or Space to flip</span>
           <button onclick="MOBCOM_MODULE.nextCard()" class="px-3 py-1.5 touch-target flex items-center">Next Card ›</button>
         </div>
 
@@ -1092,7 +1098,7 @@ const MOBCOM_MODULE = (() => {
     `;
   }
 
-  function onFilterCards(cat) {
+    function onFilterCards(cat) {
     filterFlashcards(cat);
     const container = document.getElementById("main-content");
     if (container) renderView("flashcards", container);

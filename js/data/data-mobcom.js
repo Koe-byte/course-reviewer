@@ -118,257 +118,350 @@ const MOBCOM_DATA = {
   ],
 
   flashcards: [
-    // --- LESSON 2: MOBILE INTERNET PROTOCOLS (MIDTERM FOCUS) ---
     {
       id: 1,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "Why does physical mobility complicate traditional IP addressing?",
-      back: "In traditional IP, an IP address has a <strong>dual conflicting role</strong>:<br>1. <strong>Endpoint Identifier:</strong> Identifies the host in transport-layer TCP sockets (IP:port).<br>2. <strong>Topological Routing Locator:</strong> Specifies which subnet the node is physically attached to.<br><br>• If a mobile node <em>keeps</em> its IP in a foreign network, routers cannot route packets (topological mismatch).<br>• If it <em>changes</em> its IP, all existing TCP connections and sessions are instantly severed!",
-      mnemonic: "Dual Role Conflict: Identity vs. Location"
-    },
-    {
-      id: 2,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "Differentiate TCP vs. UDP and list their primary use cases.",
-      back: "<strong>TCP (Transmission Control Protocol):</strong> Connection-oriented, reliable (3-way handshake, retransmissions, sequence numbers, congestion/flow control).<br><em>Use Cases:</em> Web (HTTP/HTTPS), file transfer (FTP), email (SMTP), where zero loss is essential.<br><br><strong>UDP (User Datagram Protocol):</strong> Connectionless, unreliable, best-effort (no handshake, no retransmissions, low 8-byte header overhead).<br><em>Use Cases:</em> VoIP, live video streaming, multiplayer games, DNS, where low latency beats packet recovery.",
-      mnemonic: "TCP = Trustworthy & Checked | UDP = Urgent & Direct"
-    },
-    {
-      id: 3,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What is the primary challenge of TCP in mobile wireless environments?",
-      back: "The <strong>Congestion Fallacy</strong>: Standard TCP assumes all packet loss is caused by network buffer congestion and immediately cuts its congestion window in half, entering slow-start.<br><br>In mobile wireless, however, losses are caused by <strong>high bit error rates (BER), RF fading, interference, and brief handoff disconnections</strong>—not congestion! This causes TCP throughput to unnecessarily plummet.",
-      mnemonic: "TCP confuses Wireless Noise with Router Congestion"
-    },
-    {
-      id: 4,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What are the 5 core components of Mobile IP (RFC 3344)?",
-      back: "1. <strong>Mobile Node (MN):</strong> The device changing points of attachment.<br>2. <strong>Home Agent (HA):</strong> Router on home network that intercepts and tunnels packets to the MN.<br>3. <strong>Foreign Agent (FA):</strong> Router on visited foreign network that detunnels and delivers packets to MN.<br>4. <strong>Care-of Address (CoA):</strong> Temporary routing address of MN in foreign network.<br>5. <strong>Correspondent Node (CN):</strong> The communicating peer device.",
-      mnemonic: "M.H.F.C.C. = MN, HA, FA, CoA, CN"
-    },
-    {
-      id: 5,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "Differentiate Foreign Agent CoA (FA-CoA) vs. Collocated CoA.",
-      back: "• <strong>FA Care-of Address:</strong> The IP address of the Foreign Agent's network interface. Multiple mobile nodes share the same FA-CoA. The FA terminates the tunnel and decapsulates packets.<br><br>• <strong>Collocated Care-of Address:</strong> A temporary, individual IP address assigned directly to the Mobile Node via DHCP or autoconfiguration on the foreign network. The MN itself acts as the tunnel endpoint and performs decapsulation.",
-      mnemonic: "FA-CoA = Shared by FA | Collocated = Owned by MN"
-    },
-    {
-      id: 6,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What are the 3 sequential phases of the Mobile IP process?",
-      back: "<strong>1. Agent Discovery:</strong> HA and FA broadcast ICMP Agent Advertisements; MN detects whether it is at home or on a foreign network.<br><strong>2. Registration:</strong> MN obtains a CoA and sends a Registration Request to FA ➔ HA; HA binds Home Address to CoA in its mobility table.<br><strong>3. Tunneling & Encapsulation:</strong> HA intercepts packets destined for MN (via Proxy ARP), encapsulates them in outer IP headers, and tunnels them to the CoA.",
-      mnemonic: "D.R.T. = Discovery ➔ Registration ➔ Tunneling"
-    },
-    {
-      id: 7,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "How is data transferred to the Mobile Node (CN ➔ MN)?",
-      back: "1. CN sends regular IP packet to MN's permanent <strong>Home Address</strong>.<br>2. Normal internet routing forwards the packet to MN's home network.<br>3. <strong>Home Agent (HA)</strong> intercepts the packet using <strong>Proxy ARP</strong>.<br>4. HA encapsulates the packet inside an outer IP packet destined for the <strong>Care-of Address (CoA)</strong> (IP-in-IP tunneling).<br>5. The packet reaches the Foreign Agent (or MN), which decapsulates the original payload and delivers it locally over wireless.",
-      mnemonic: "CN ➔ Home Net ➔ HA Proxy ARP ➔ IP Tunnel ➔ CoA/FA ➔ MN"
-    },
-    {
-      id: 8,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "How is data transferred from the Mobile Node (MN ➔ CN), and what is Triangular Routing?",
-      back: "• <strong>Direct Routing:</strong> MN sends packets directly to CN with Source IP = Home Address. Because incoming packets travel CN ➔ HA ➔ MN while outgoing packets travel MN ➔ CN directly, this dogleg path is called <strong>Triangular Routing</strong>.<br><br>• <strong>The Problem:</strong> Foreign network firewalls perform <em>Ingress Filtering</em> and drop outgoing packets whose source IP does not match the foreign subnet.<br>• <strong>Solution:</strong> <em>Reverse Tunneling (RFC 3024)</em> — MN tunnels packets back to HA, which forwards them to CN.",
-      mnemonic: "Triangular Routing = Indirect In, Direct Out | Reverse Tunnel beats Ingress Filter"
-    },
-    {
-      id: 9,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "Why is IPv6 superior to IPv4 for mobile environments?",
-      back: "1. <strong>Massive Address Space:</strong> 128-bit addresses ($3.4 \times 10^{38}$) provide globally routable IPs for every device.<br>2. <strong>No Foreign Agents Needed:</strong> Every IPv6 MN acquires its own Collocated CoA via SLAAC (Stateless Autoconfiguration).<br>3. <strong>Built-in Route Optimization:</strong> Eliminates triangular routing natively using IPv6 Routing Headers.<br>4. <strong>Mandatory IPsec:</strong> Built-in end-to-end authentication and encryption.<br>5. <strong>No NAT Required:</strong> Restores pure end-to-end connectivity.",
-      mnemonic: "IPv6 = 128-bit + SLAAC + Built-in Route Opt + No FA + No NAT"
-    },
-    {
-      id: 10,
-      category: 'midterm-lip',
-      categoryName: 'Lesson 2: Mobile IP',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What is NAT in IPv4 and why was it removed / unnecessary in IPv6?",
-      back: "<strong>NAT (Network Address Translation):</strong> A temporary band-aid in IPv4 that maps multiple private RFC 1918 IPs to one public IP using port multiplexing (PAT) to conserve limited 32-bit addresses.<br><br><strong>Why Removed in IPv6:</strong><br>• IPv6 has an inexhaustible 128-bit address space, making address rationing obsolete.<br>• NAT breaks the <em>End-to-End Principle</em> of the internet.<br>• NAT breaks IPsec digital signatures (headers modified in transit).<br>• NAT complicates peer-to-peer VoIP, gaming, and mobile handovers.",
-      mnemonic: "NAT was an IPv4 Band-Aid; IPv6 Restores Pure End-to-End"
-    },
-
-    // --- LESSON 3: GSM (MIDTERM FOCUS) ---
-    {
-      id: 11,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "Describe the evolution of GSM: GSM ➔ GPRS ➔ EDGE.",
-      back: "• <strong>GSM (2G):</strong> Circuit-switched voice & SMS, 9.6 kbps data, GMSK modulation.<br>• <strong>GPRS (2.5G):</strong> Introduced packet-switched domain alongside voice, 'always-on' volume billing, up to 114 kbps, added SGSN & GGSN nodes.<br>• <strong>EDGE (2.75G):</strong> Upgraded modulation to 8-PSK, boosted data rates to 384 kbps (3x faster than GPRS), introduced Adaptive Modulation & Coding (AMC) and Incremental Redundancy.",
-      mnemonic: "GSM (Voice 9.6k) ➔ GPRS (Packets 114k) ➔ EDGE (8-PSK 384k)"
-    },
-    {
-      id: 12,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What specific technological improvements were introduced from GPRS to EDGE?",
-      back: "1. <strong>8-PSK Modulation:</strong> Replaced GMSK (1 bit/symbol) with 8-PSK (<strong>3 bits per symbol</strong>), tripling raw data throughput in the same 200 kHz channel.<br>2. <strong>384 kbps Peak Speeds:</strong> 3x–4x faster than GPRS.<br>3. <strong>Adaptive Modulation & Coding (AMC):</strong> Dynamically shifts between 9 schemes (MCS-1 to MCS-9) based on real-time link quality.<br>4. <strong>Incremental Redundancy (IR / HARQ):</strong> Retransmissions send only parity error-correction bits rather than resending entire packets.<br>5. <strong>Zero New Spectrum:</strong> Plug-and-play upgrade on existing GSM/GPRS BTS hardware.",
-      mnemonic: "8-PSK (3 bits/sym) + 384 kbps + AMC (MCS 1-9) + Incremental Redundancy"
-    },
-    {
-      id: 13,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What are the 4 main subsystems of the complete GSM Network Architecture?",
-      back: "1. <strong>Mobile Station Subsystem (MS):</strong> Mobile Equipment (handset IMEI) + SIM card.<br>2. <strong>Base Station Subsystem (BSS):</strong> Radio interface (BTS towers + BSC controllers).<br>3. <strong>Network & Switching Subsystem (NSS):</strong> The core brain (MSC, GMSC, HLR, VLR, AuC, EIR).<br>4. <strong>Operation Support Subsystem (OSS):</strong> Centralized network maintenance, alarms, and configuration (OMC).",
-      mnemonic: "M.B.N.O. = MS, BSS, NSS, OSS"
-    },
-    {
-      id: 14,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "Differentiate BTS vs. BSC in the Base Station Subsystem (BSS).",
-      back: "• <strong>Base Transceiver Station (BTS):</strong> The physical cell tower hardware containing radio transceivers and antennas. Handles radio signal transmission, modulation, and RF-to-digital conversion.<br><br>• <strong>Base Station Controller (BSC):</strong> The intelligence of the radio network. Manages multiple BTS towers, allocates radio frequency channels, controls transmitter power levels, and handles handoffs between cells under its control.",
-      mnemonic: "BTS = Tower Hardware | BSC = Radio Traffic Controller"
-    },
-    {
-      id: 15,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What are the 6 core components under the Network and Switching Subsystem (NSS)?",
-      back: "1. <strong>MSC (Mobile Switching Center):</strong> Central telephone switching, routing, and billing.<br>2. <strong>GMSC (Gateway MSC):</strong> Gateway bridging GSM to external PSTN/ISDN/Internet.<br>3. <strong>HLR (Home Location Register):</strong> Central master database of all permanent subscriber profiles.<br>4. <strong>VLR (Visitor Location Register):</strong> Temporary dynamic database for subscribers currently roaming in that MSC area.<br>5. <strong>AuC (Authentication Center):</strong> Security vault storing secret key Ki and generating triplets.<br>6. <strong>EIR (Equipment Identity Register):</strong> Database tracking physical handsets via IMEI.",
-      mnemonic: "M.G.H.V.A.E. = MSC, GMSC, HLR, VLR, AuC, EIR"
-    },
-    {
-      id: 16,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "Compare the Home Location Register (HLR) vs. Visitor Location Register (VLR).",
-      back: "• <strong>HLR:</strong> Central, permanent database belonging to the home carrier. Stores IMSI, MSISDN, subscribed features, and the pointer to the subscriber's current VLR address.<br><br>• <strong>VLR:</strong> Local, temporary database linked to an MSC. Caches subscriber data while the user is actively roaming in its service area to avoid repeated queries to distant HLRs, and assigns temporary identities (TMSI, MSRN).",
-      mnemonic: "HLR = Permanent Master Profile | VLR = Temporary Roaming Cache"
-    },
-    {
-      id: 17,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What is the function of the Authentication Center (AuC) in GSM?",
-      back: "The <strong>AuC</strong> is a protected security database linked to the HLR. It holds each subscriber's secret symmetric authentication key (<strong>Ki</strong>) and executes the A3/A8 cryptographic algorithms to produce <strong>Authentication Triplets</strong>:<br>1. <strong>RAND:</strong> Random 128-bit challenge.<br>2. <strong>SRES:</strong> Signed Response (verifies SIM legitimacy).<br>3. <strong>Kc:</strong> 64-bit Cipher Key (encrypts voice traffic via A5).",
-      mnemonic: "AuC generates Triplets (RAND, SRES, Kc) with Secret Key Ki"
-    },
-    {
-      id: 18,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What is the Equipment Identity Register (EIR) and its 3 lists?",
-      back: "The <strong>EIR</strong> tracks the physical hardware of handsets using their 15-digit <strong>IMEI</strong> across 3 categories:<br>• <strong>White List:</strong> Approved, valid handsets permitted full network access.<br>• <strong>Gray List:</strong> Handsets under observation for technical glitches or suspected tampering.<br>• <strong>Black List:</strong> Stolen, counterfeit, or banned handsets barred completely from connecting to any network.",
-      mnemonic: "EIR = Hardware Police (White=Allowed, Gray=Watched, Black=Blocked)"
-    },
-    {
-      id: 19,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "What is the Subscriber Identity Module (SIM) and what key data does it store?",
-      back: "The <strong>SIM</strong> is a tamper-resistant smart card microcontroller that decouples the subscriber's personal subscription from the physical handset hardware.<br><br><strong>Stores:</strong><br>1. <strong>IMSI:</strong> International Mobile Subscriber Identity (unique network ID).<br>2. <strong>Ki:</strong> 128-bit shared secret authentication key (never leaves SIM).<br>3. <strong>A3/A8 Algorithms:</strong> Authentication and cipher key generation logic.<br>4. <strong>PIN / PUK:</strong> User access protection codes.<br>5. Personal contacts and SMS storage.",
-      mnemonic: "SIM Decouples Person from Phone (stores IMSI + Ki + A3/A8)"
-    },
-    {
-      id: 20,
-      category: 'midterm-gsm',
-      categoryName: 'Lesson 3: GSM',
-      isMidterm: true,
-      midtermFocus: true,
-      front: "Differentiate IMEI vs. IMSI vs. MSISDN.",
-      back: "• <strong>IMEI (Int'l Mobile Equipment Identity):</strong> 15-digit unique serial number burned into the <em>physical phone handset hardware</em> (tracked by EIR).<br>• <strong>IMSI (Int'l Mobile Subscriber Identity):</strong> Unique 15-digit identifier identifying the <em>subscriber on the cellular network</em> (stored on SIM).<br>• <strong>MSISDN:</strong> The actual public dialable telephone phone number (e.g., +63 917 123 4567) mapped to the IMSI in the HLR.",
-      mnemonic: "IMEI = Phone Body | IMSI = Network Identity | MSISDN = Dialable Phone #"
-    },
-
-    // --- LESSON 1: CELLULAR WIRELESS NETWORKS (CHAPTER 2 MODULE) ---
-    {
-      id: 21,
-      category: 'midterm-cell',
-      categoryName: 'Lesson 1: Cellular Networks',
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
       isMidterm: true,
       midtermFocus: true,
       front: "What is cellular communication and what 2 practical problems does it solve?",
-      back: "A wireless method where a large geographic area is divided into smaller sections called <strong>cells</strong>, each served by its own low-power base station rather than one giant transmitter.<br><br><strong>Solves 2 Practical Problems:</strong><br>1. <strong>Limited Radio Spectrum:</strong> Frequencies can be reused in non-adjacent cells.<br>2. <strong>Massive User Capacity:</strong> Multiple low-power towers serve millions of simultaneous users without congestion.",
-      mnemonic: "Cellular Solves: Limited Frequencies + Millions of Users"
+      back: "A wireless method where a large geographic area is divided into smaller sections called <strong>cells</strong>, each served by its own low-power base station rather than one giant transmitter.<br><br><strong>Solves 2 Practical Problems:</strong><br>1. <strong>Limited Radio Frequencies:</strong> Constraining power allows the same frequencies to be reused across distant cells.<br>2. <strong>Massive User Density:</strong> Numerous smaller cells serve millions of users simultaneously without congestion.",
+      mnemonic: "Cellular Solves: Frequency Scarcity + Massive User Density"
+    },
+    {
+      id: 2,
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Why are cellular network planning diagrams drawn as hexagons instead of circles or squares?",
+      back: "\u2022 <strong>Circle Approximation:</strong> A regular hexagon is the geometric polygon that closest approximates a circular antenna radiation pattern.<br>\u2022 <strong>100% Gapless Tessellation:</strong> Hexagons pack tightly together without coverage gaps (dead zones) or overlapping interference.<br><br><em>Real-world note:</em> Actual physical cells are irregular due to terrain, mountains, tall buildings, and foliage.",
+      mnemonic: "Hexagons = Circle Approximation + 100% Gapless Packing"
+    },
+    {
+      id: 3,
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What are the 4 basic foundational elements of any cellular communications system?",
+      back: "1. <strong>Mobile Station (MS):</strong> The wireless end-user device (handset hardware + SIM).<br>2. <strong>Base Station (BS / BTS):</strong> Fixed transceiver on a tower/rooftop communicating with mobile stations over RF.<br>3. <strong>Cell:</strong> The geographic area served by a single base station.<br>4. <strong>Handoff (Handover):</strong> The process transferring an active call or data session between cells without disruption.",
+      mnemonic: "MS (Handset) + BS (Tower) + Cell (Area) + Handoff (Transfer)"
+    },
+    {
+      id: 4,
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Describe the sequential path of a mobile call or data session through the cellular architecture.",
+      back: "<code>Mobile Station (MS)</code><br>\u2794 <code>Base Transceiver Station (BTS)</code><br>\u2794 <code>Base Station Controller (BSC)</code><br>\u2794 <code>Mobile Switching Center (MSC)</code><br>\u2794 <code>Backbone Network</code><br>\u2794 <code>Destination (PSTN / Internet / Receiving MS)</code>.",
+      mnemonic: "MS \u2794 BTS \u2794 BSC \u2794 MSC \u2794 Backbone"
+    },
+    {
+      id: 5,
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "How do Frequency Reuse Clusters (such as the N=7 A\u2013G pattern) prevent co-channel interference?",
+      back: "Cells are organized into repeating groups called <strong>clusters</strong> (e.g. 7 cells labeled A through G).<br>\u2022 Each cell within a single cluster is allocated a unique, non-overlapping frequency set.<br>\u2022 The entire cluster pattern is repeated across the metropolitan area.<br>\u2022 Identical frequency groups are separated by safe physical distances, eliminating co-channel interference.",
+      mnemonic: "N=7 Cluster: Different freqs inside cluster, repeated at safe distance"
+    },
+    {
+      id: 6,
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What is the operational difference between Handoff (Handover) and Roaming?",
+      back: "\u2022 <strong>Handoff:</strong> Automatic, seamless transfer of an ongoing active call or data session between adjacent base stations within the <strong>same operator's network</strong> without interruption.<br><br>\u2022 <strong>Roaming:</strong> Obtaining cellular connectivity on a <strong>partner operator's network</strong> when traveling outside the home operator's geographic coverage area.",
+      mnemonic: "Handoff = Tower to Tower (Same Carrier) | Roaming = Carrier to Carrier (Visited Network)"
+    },
+    {
+      id: 7,
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Compare the 1G and 2G cellular generations: what was the defining technological leap?",
+      back: "\u2022 <strong>1G (Early 1980s):</strong> Analog radio signals, voice telephony only. Very limited capacity, zero data services, minimal security (vulnerable to eavesdropping on open frequencies).<br><br>\u2022 <strong>2G (Early 1990s):</strong> Digital signal transmission (GSM). Improved voice clarity and capacity, introduced subscriber authentication, and launched Short Message Service (SMS) text messaging.",
+      mnemonic: "1G = Analog Voice | 2G = Digital Voice + SMS + GSM"
+    },
+    {
+      id: 8,
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "How did 3G, 4G, and 5G evolve the cellular paradigm from voice to all-IP and ultra-low latency?",
+      back: "\u2022 <strong>3G (Early 2000s):</strong> High-speed mobile internet access, web browsing, video calling, and multimedia.<br>\u2022 <strong>4G (~2009):</strong> All-IP packet-switched architecture (LTE); completely eliminated legacy circuit switching for voice (VoLTE).<br>\u2022 <strong>5G (~2019):</strong> Multi-Gbps speeds, sub-1ms delay, massive device connectivity (1M/km\u00b2), and network slicing.",
+      mnemonic: "3G = Mobile Web | 4G = All-IP LTE | 5G = Sub-1ms Latency & IoT"
+    },
+    {
+      id: 9,
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What is Network Densification and why are small cells deployed?",
+      back: "To meet explosive mobile data demand in crowded zones (stadiums, shopping malls, city centers), operators deploy <strong>small cells</strong> (compact, low-power base stations on streetlights/utility poles) alongside macro towers.<br><br>This multiplies localized capacity and handles immense user traffic within the same physical space.",
+      mnemonic: "Small Cells = High density localized capacity in crowded venues"
+    },
+    {
+      id: 10,
+      category: "midterm-cell",
+      categoryName: "Lesson 1: Cellular Networks",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What is 5G Network Slicing and what are the 3 canonical slices?",
+      back: "Partitioning one physical cellular infrastructure into multiple logically isolated virtual networks:<br>1. <strong>eMBB (Enhanced Mobile Broadband):</strong> High bandwidth consumer video & streaming.<br>2. <strong>mMTC (Massive Machine-Type Comms):</strong> Dense IoT sensors, low data, 10-year battery.<br>3. <strong>URLLC (Ultra-Reliable Low-Latency):</strong> Sub-1ms latency, 99.999% uptime for autonomous driving & telesurgery.",
+      mnemonic: "eMBB (Bandwidth) + mMTC (IoT Sensors) + URLLC (Mission-Critical)"
+    },
+    {
+      id: 11,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What is the Internet Protocol (IP) and how does packet switching provide network resilience?",
+      back: "IP is the set of rules governing addressing, packaging, and routing packets.<br><br><strong>Packet Switching:</strong> Breaks messages into small units (packets) that travel independently across store-and-forward routers.<br>\u2022 <strong>Resilience:</strong> If a router or communication link fails, packets are dynamically rerouted along alternate available paths.",
+      mnemonic: "IP = Rules for Packets | Packet Switching = Independent routes + Dynamic recovery"
+    },
+    {
+      id: 12,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Why does physical host mobility fundamentally break standard IP routing?",
+      back: "An IP address serves a <strong>dual conflicting role</strong>:<br>1. <strong>Endpoint Identifier:</strong> Identifies active transport-layer TCP socket connections (4-tuple: src IP, src port, dst IP, dst port).<br>2. <strong>Topological Routing Locator:</strong> Specifies which physical subnet the device is attached to.<br><br>\u2022 <em>Keep old IP:</em> Foreign routers cannot route packets to a foreign subnet.<br>\u2022 <em>Change to new IP:</em> All ongoing TCP connections and sessions instantly collapse!",
+      mnemonic: "Dual Role Conflict: Socket Identity vs. Physical Subnet Location"
+    },
+    {
+      id: 13,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Differentiate Home Address (HoA) and Care-of Address (CoA) in Mobile IP.",
+      back: "\u2022 <strong>Home Address (HoA):</strong> A permanent, stable IP address belonging to the mobile node's home network. Other internet hosts always use this address to contact the device.<br><br>\u2022 <strong>Care-of Address (CoA):</strong> A temporary IP address leased whenever the device visits a foreign network, identifying its current physical point of attachment.",
+      mnemonic: "Home Address = Permanent ID | Care-of Address = Temporary Foreign Location"
+    },
+    {
+      id: 14,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What are the 4 layers of the TCP/IP model and their primary functions?",
+      back: "1. <strong>Application Layer:</strong> End-user software & protocols (HTTP, HTTPS, FTP, SMTP, DNS).<br>2. <strong>Transport Layer:</strong> End-to-end data transmission, chunking, sequencing, reliability (TCP vs UDP).<br>3. <strong>Internet Layer:</strong> Logical addressing, packet formation, and routing (IPv4, IPv6).<br>4. <strong>Network Access (Link) Layer:</strong> Physical data transmission over cables/radio, framing, MAC addressing.",
+      mnemonic: "A.T.I.N. = Application, Transport, Internet, Network Access"
+    },
+    {
+      id: 15,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Compare TCP vs. UDP on connection type, reliability, and acknowledgments.",
+      back: "\u2022 <strong>TCP:</strong> Connection-oriented (3-way handshake SYN \u2794 SYN-ACK \u2794 ACK), guarantees reliable delivery, uses ACKs to confirm receipt, and automatically retransmits lost packets in order.<br><br>\u2022 <strong>UDP:</strong> Connectionless (no handshake), does not guarantee delivery (best-effort), sends no acknowledgments, and does not retransmit lost packets.",
+      mnemonic: "TCP = 3-Way Handshake + Guaranteed ACKs | UDP = Connectionless + Best-Effort"
+    },
+    {
+      id: 16,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Compare TCP vs. UDP on header size, data treatment, and typical application use cases.",
+      back: "\u2022 <strong>TCP:</strong> Variable header size (20\u201360 bytes), treats data as a continuous byte stream, unicast only. Used for web (HTTP/S), file transfer (FTP), and email (SMTP).<br><br>\u2022 <strong>UDP:</strong> Fixed 8-byte header, treats data as discrete independent messages, supports broadcast & multicast. Used for VoIP, live video, DNS, and DHCP.",
+      mnemonic: "TCP: 20-60B (Web/Files) | UDP: 8B Fixed (VoIP/Streaming/DNS)"
+    },
+    {
+      id: 17,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What is the primary challenge of standard TCP in mobile wireless environments (The Congestion Fallacy)?",
+      back: "Standard TCP was designed for wired networks, where packet loss almost always means router buffer congestion. In response, TCP throttles its transmission window.<br><br>In mobile wireless, however, losses are caused by <strong>RF fading, signal drops, interference, and cell handoffs</strong>\u2014not buffer congestion! TCP's mistaken throttling collapses mobile throughput.",
+      mnemonic: "TCP confuses Wireless Noise with Router Congestion"
+    },
+    {
+      id: 18,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Identify the 7 key architectural entities of Mobile IP (RFC 3344).",
+      back: "1. <strong>Mobile Node (MN):</strong> The portable device changing attachments.<br>2. <strong>Correspondent Node (CN):</strong> Remote communicating peer.<br>3. <strong>Home Network (HN):</strong> Subnet owning MN's permanent address.<br>4. <strong>Home Agent (HA):</strong> Home router tracking MN & tunneling data.<br>5. <strong>Foreign Network (FN):</strong> Network visited by MN.<br>6. <strong>Foreign Agent (FA):</strong> Foreign router providing CoA & detunneling.<br>7. <strong>Care-of Address (CoA):</strong> Temporary foreign IP.",
+      mnemonic: "MN + CN + HN/FN + HA/FA + CoA"
+    },
+    {
+      id: 19,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "How does data travel from Correspondent Node to Mobile Node (CN \u2794 MN) via Proxy ARP & Tunneling?",
+      back: "1. CN sends packets to MN's permanent <strong>Home Address</strong>.<br>2. <strong>Home Agent (HA)</strong> intercepts the packets using <strong>Proxy ARP</strong> (answering ARP queries with its own MAC address).<br>3. HA encapsulates original packets inside outer IP packets addressed to the <strong>Care-of Address (CoA)</strong> (IP-in-IP tunneling).<br>4. Foreign Agent (or MN) decapsulates and delivers original payload.",
+      mnemonic: "CN \u2794 Home Network \u2794 HA Proxy ARP \u2794 IP-in-IP Tunnel \u2794 CoA/FA \u2794 MN"
+    },
+    {
+      id: 20,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Why is Reverse Tunneling (RFC 3024) necessary for outgoing packets from a Mobile Node?",
+      back: "Under direct routing, MN transmits with Source IP = Home Address. Foreign border firewalls enforce <strong>Ingress Filtering</strong> (anti-spoofing) and discard outgoing packets whose source IP does not match the foreign subnet prefix.<br><br><strong>Reverse Tunneling:</strong> MN tunnels outgoing packets back to the Home Agent, which forwards them legitimately to the CN.",
+      mnemonic: "Reverse Tunneling bypasses Foreign Firewall Ingress Filtering"
+    },
+    {
+      id: 21,
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "How do IPv4 and IPv6 differ in address size, naming, and NAT requirements?",
+      back: "\u2022 <strong>IPv4:</strong> 32 bits ($2^{32} \u0007pprox 4.3\\text{B}$ IPs), numerical 4 octets (192.168.1.1), heavily requires <strong>NAT</strong> (Network Address Translation).<br><br>\u2022 <strong>IPv6:</strong> 128 bits ($2^{128} \u0007pprox 3.4 \\times 10^{38}$ IPs), hexadecimal in 8 colon-separated groups, <strong>NAT completely eliminated</strong> (every device has a unique public IP, restoring End-to-End Principle).",
+      mnemonic: "IPv4 = 32-bit + NAT | IPv6 = 128-bit + No NAT (End-to-End Restored)"
     },
     {
       id: 22,
-      category: 'midterm-cell',
-      categoryName: 'Lesson 1: Cellular Networks',
+      category: "midterm-lip",
+      categoryName: "Lesson 2: Mobile IP",
       isMidterm: true,
       midtermFocus: true,
-      front: "Why are cellular network diagrams drawn as hexagons instead of circles?",
-      back: "Circles leave either <strong>uncovered dead zones (gaps)</strong> or <strong>overlapping interference areas</strong> when tiled on a map.<br><br>Regular hexagons approximate a circular coverage area while providing <strong>100% gapless surface tessellation</strong> with equal distances to all 6 adjacent cell centers and minimum boundary perimeter.",
-      mnemonic: "Hexagons = 100% Gapless Tessellation with Zero Dead Zones"
+      front: "Compare IPv4 and IPv6 on addressing modes, header format, and mobile support.",
+      back: "\u2022 <strong>Addressing Modes:</strong> IPv4 has unicast, broadcast, multicast; IPv6 has unicast, multicast, and <strong>anycast (broadcast eliminated)</strong>.<br>\u2022 <strong>Headers:</strong> IPv4 is variable (20\u201360 bytes); IPv6 is fixed (40 bytes).<br>\u2022 <strong>Mobile Support:</strong> IPv4 requires add-on Mobile IP with Foreign Agents; IPv6 has <strong>built-in native mobility</strong> (SLAAC autoconfiguration eliminates FA!).",
+      mnemonic: "IPv6: Anycast, 40B Fixed Header, SLAAC eliminates Foreign Agents"
     },
     {
       id: 23,
-      category: 'midterm-cell',
-      categoryName: 'Lesson 1: Cellular Networks',
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
       isMidterm: true,
       midtermFocus: true,
-      front: "What is Frequency Reuse in cellular networks?",
-      back: "The practice of assigning the <strong>exact same set of radio frequencies to geographically separated cells</strong> (organized in repeating cluster patterns, e.g. N=7).<br><br>As long as co-channel cells are separated by a minimum reuse distance, co-channel interference is prevented while multiplying network capacity exponentially.",
-      mnemonic: "Frequency Reuse = Same Frequencies in Distant Cells"
+      front: "What is GSM and why was its commercial deployment in the early 1990s significant?",
+      back: "The 2G digital cellular standard developed in Europe.<br>\u2022 Replaced incompatible analog systems with a unified digital cellular standard.<br>\u2022 Introduced the <strong>Subscriber Identity Module (SIM)</strong> card.<br>\u2022 Established standardized <strong>international roaming</strong> across operators/countries.<br>\u2022 Supported <strong>Short Message Service (SMS)</strong> text messaging.",
+      mnemonic: "GSM: Digital voice + SIM card + International roaming + SMS"
     },
     {
       id: 24,
-      category: 'midterm-cell',
-      categoryName: 'Lesson 1: Cellular Networks',
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
       isMidterm: true,
       midtermFocus: true,
-      front: "Differentiate Handoff (Handover) vs. Roaming.",
-      back: "• <strong>Handoff:</strong> Automatic, seamless transfer of an ongoing call or data session from one cell base station to another as the mobile user moves, without dropping service.<br><br>• <strong>Roaming:</strong> Accessing cellular coverage and services on a visited partner carrier's network when traveling outside the geographic footprint of one's home operator.",
-      mnemonic: "Handoff = Tower to Tower | Roaming = Carrier to Carrier"
+      front: "Describe the 3-step evolutionary trajectory of GSM: GSM \u2794 GPRS \u2794 EDGE.",
+      back: "\u2022 <strong>GSM (2G):</strong> Circuit-switched voice & SMS, 9.6 kbps data, GMSK modulation.<br>\u2022 <strong>GPRS (2.5G):</strong> Packet-switched mobile data, always-on volume billing, up to 114 kbps, added SGSN/GGSN.<br>\u2022 <strong>EDGE (2.75G):</strong> Upgraded to 8-PSK modulation (3 bits/symbol), tripling data rates to 384 kbps using Adaptive Modulation & Coding (AMC).",
+      mnemonic: "GSM (2G Voice 9.6k) \u2794 GPRS (2.5G Packets 114k) \u2794 EDGE (2.75G 8-PSK 384k)"
     },
-
-    // --- FOUNDATIONS & PRELIM REVIEWS ---
     {
       id: 25,
-      category: 'mod1',
-      categoryName: 'Module 1: Foundations',
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What are the 4 main subsystems of the complete GSM Network Architecture?",
+      back: "1. <strong>Mobile Station Subsystem (MS):</strong> Mobile handset hardware + SIM card.<br>2. <strong>Base Station Subsystem (BSS):</strong> Radio towers (BTS) + controllers (BSC).<br>3. <strong>Network & Switching Subsystem (NSS):</strong> Core switching & databases (MSC, HLR, VLR, AuC, EIR, PSTN).<br>4. <strong>Operation Support Subsystem (OSS):</strong> Centralized maintenance & network monitoring (OMC).",
+      mnemonic: "M.B.N.O. = MS, BSS, NSS, OSS"
+    },
+    {
+      id: 26,
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Differentiate the BTS and BSC within the Base Station Subsystem (BSS).",
+      back: "\u2022 <strong>Base Transceiver Station (BTS):</strong> The physical cell tower with radio transceivers (TRX) and antennas, handling direct RF communication with mobile stations in a cell.<br><br>\u2022 <strong>Base Station Controller (BSC):</strong> The intelligence managing multiple BTS towers, allocating radio channels, adjusting power levels, and coordinating handoffs.",
+      mnemonic: "BTS = Tower Hardware | BSC = Radio Traffic Coordinator"
+    },
+    {
+      id: 27,
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What are the 3 standardized interfaces in the GSM architecture (Air, Abis, A)?",
+      back: "1. <strong>Radio Air Interface:</strong> Connects Mobile Station (MS) to Base Transceiver Station (BTS).<br>2. <strong>Abis Interface:</strong> Connects Base Transceiver Station (BTS) to Base Station Controller (BSC).<br>3. <strong>A Interface:</strong> Connects Base Station Controller (BSC) to Mobile Switching Center (MSC).",
+      mnemonic: "Air (MS-BTS) \u2794 Abis (BTS-BSC) \u2794 A (BSC-MSC)"
+    },
+    {
+      id: 28,
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Differentiate the Mobile Switching Center (MSC) and Gateway MSC (GMSC).",
+      back: "\u2022 <strong>MSC:</strong> The core switching exchange that sets up, manages, and terminates calls and data sessions for mobile subscribers, generating billing records (CDRs).<br><br>\u2022 <strong>GMSC (Gateway MSC):</strong> An MSC equipped with gateway interfaces connecting the GSM cellular network to external telephone networks (PSTN/ISDN) and other operators.",
+      mnemonic: "MSC = Core Switch | GMSC = Gateway to External PSTN/Networks"
+    },
+    {
+      id: 29,
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Compare the Home Location Register (HLR) vs. Visitor Location Register (VLR).",
+      back: "\u2022 <strong>HLR:</strong> Permanent central master database of all home subscribers. Stores IMSI, phone number, subscription profile, and current location pointer.<br><br>\u2022 <strong>VLR:</strong> Temporary local database linked to an MSC. Caches profiles of subscribers actively present or roaming in its service area and allocates temporary MSRNs.",
+      mnemonic: "HLR = Permanent Home Master Profile | VLR = Temporary Roaming Cache"
+    },
+    {
+      id: 30,
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What is the function of the Authentication Center (AuC) in GSM?",
+      back: "The <strong>AuC</strong> is a protected security database linked to the HLR. It holds each subscriber's secret symmetric authentication key (<strong>Ki</strong>) and runs cryptographic algorithms to generate <strong>Authentication Triplets</strong>:<br>1. <strong>RAND:</strong> 128-bit random challenge.<br>2. <strong>SRES:</strong> Signed Response (verifies SIM legitimacy).<br>3. <strong>Kc:</strong> 64-bit Cipher Key (encrypts voice traffic via A5).",
+      mnemonic: "AuC holds Ki to generate Triplets (RAND, SRES, Kc)"
+    },
+    {
+      id: 31,
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What is the Equipment Identity Register (EIR) and its 3 database lists?",
+      back: "The <strong>EIR</strong> tracks the physical hardware of handsets using their 15-digit <strong>IMEI</strong> across 3 categories:<br>\u2022 <strong>White List:</strong> Approved, valid handsets permitted full network access.<br>\u2022 <strong>Gray List:</strong> Handsets under observation for technical glitches or suspected tampering.<br>\u2022 <strong>Black List:</strong> Stolen, counterfeit, or banned handsets barred completely from connecting.",
+      mnemonic: "EIR = Hardware Police (White=Allowed, Gray=Watched, Black=Blocked)"
+    },
+    {
+      id: 32,
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What is the Subscriber Identity Module (SIM) and why was it a key innovation?",
+      back: "The <strong>SIM</strong> is a tamper-resistant smart card microcontroller that decouples the subscriber's personal subscription from physical handset hardware.<br><br><strong>Why Innovative:</strong> In 1G, identity was locked to phone hardware. GSM separated identity into the SIM card, allowing users to move their SIM into any compatible phone while keeping their phone number, account, and contacts.",
+      mnemonic: "SIM Decouples Person from Phone (stores IMSI + Ki + PIN/PUK)"
+    },
+    {
+      id: 33,
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "What are the physical form factors of the SIM card and what is eSIM?",
+      back: "\u2022 <strong>Full-size & Mini-SIM (2FF):</strong> Early standard credit-card and classic formats.<br>\u2022 <strong>Micro SIM (3FF):</strong> Reduced border format for early smartphones.<br>\u2022 <strong>Nano SIM (4FF):</strong> Minimalist format containing only chip contacts.<br>\u2022 <strong>eSIM (MFF2):</strong> Embedded chip soldered directly onto the device logic board, programmable over-the-air.",
+      mnemonic: "SIM Form Factors: 2FF \u2794 3FF \u2794 4FF \u2794 eSIM (MFF2 Embedded)"
+    },
+    {
+      id: 34,
+      category: "midterm-gsm",
+      categoryName: "Lesson 3: GSM",
+      isMidterm: true,
+      midtermFocus: true,
+      front: "Why are SMS text messages limited to 160 characters and why do they not interrupt voice calls?",
+      back: "SMS uses 7-bit character encoding ($140\\text{ bytes} \\times 8 / 7 = 160\\text{ characters}$).<br><br>\u2022 Transmitted entirely over <strong>out-of-band signaling channels</strong> (like SDCCH or SACCH) using spare capacity in the signaling system.<br>\u2022 Because it does not consume voice traffic channels, SMS can be transmitted and received even during ongoing voice calls.",
+      mnemonic: "SMS: 160 chars, transmitted over out-of-band signaling channels"
+    },
+    {
+      id: 35,
+      category: "mod1",
+      categoryName: "Module 1: Foundations",
       isMidterm: false,
       midtermFocus: false,
       front: "What are the 3 core pillars and 4 characteristics of Mobile Computing?",
@@ -376,34 +469,34 @@ const MOBCOM_DATA = {
       mnemonic: "H.S.C. (Pillars) + P.C.I.I. (Characteristics)"
     },
     {
-      id: 26,
-      category: 'mod2',
-      categoryName: 'Module 2: Media',
+      id: 36,
+      category: "mod2",
+      categoryName: "Module 2: Media",
       isMidterm: false,
       midtermFocus: false,
-      front: "What are the 8 elements of data communication and the 3 quality pillars (DAT)?",
-      back: "<strong>8 Elements:</strong> Sender, Receiver, Encoder, Decoder, Message, Medium, Protocol, Noise.<br><br><strong>3 Quality Pillars (DAT):</strong> Delivery (correct destination), Accuracy (uncorrupted), Timeliness (real-time without delay).",
-      mnemonic: "DAT = Delivery, Accuracy, Timeliness"
+      front: "What physical principle allows Fiber-Optic cables to transmit multi-terabit data over long distances with zero EMI?",
+      back: "<strong>Total Internal Reflection</strong> of light pulses through ultra-pure silica glass core with a lower-index cladding, delivering multi-Tbps bandwidth completely immune to electromagnetic noise.",
+      mnemonic: "Total Internal Reflection in Silica Glass Core"
     },
     {
-      id: 27,
-      category: 'mod2',
-      categoryName: 'Module 2: Media',
+      id: 37,
+      category: "mod2",
+      categoryName: "Module 2: Media",
       isMidterm: false,
       midtermFocus: false,
-      front: "Differentiate Guided vs. Unguided Transmission Media.",
-      back: "• <strong>Guided Media (Wired):</strong> Physical conduits like UTP, STP, Coaxial, and Fiber-Optic (transmitting light via Total Internal Reflection).<br>• <strong>Unguided Media (Wireless):</strong> Electromagnetic waves radiating across air/space like Radio Waves, Line-of-Sight Microwaves, and Infrared.",
-      mnemonic: "Guided = Physical Cables | Unguided = Free Atmosphere"
+      front: "Which network topology connects all nodes to a central hub/switch, and what is its vulnerability?",
+      back: "<strong>Star Topology:</strong> All nodes connect individually to a central switch. A single cable fault only disconnects that one node; however, the central switch is a <strong>single point of failure</strong>.",
+      mnemonic: "Star Topology = Central switch single point of failure"
     },
     {
-      id: 28,
-      category: 'mod2',
-      categoryName: 'Module 2: Media',
+      id: 38,
+      category: "mod2",
+      categoryName: "Module 2: Media",
       isMidterm: false,
       midtermFocus: false,
-      front: "What is Rain Fade and how does it affect wireless transmission?",
-      back: "A phenomenon where high-frequency radio and microwave wavelengths are comparable in size to raindrops. Rainfall absorbs and scatters electromagnetic signals, causing severe attenuation and degradation of signal-to-noise ratio.",
-      mnemonic: "Rain Fade = Rain scatters microwave beams"
+      front: "Why do microwave and millimeter-wave wireless links experience severe attenuation during torrential rainfall (Rain Fade)?",
+      back: "Raindrop physical dimensions are comparable to signal wavelengths, causing strong electromagnetic resonance, scattering, and energy absorption.",
+      mnemonic: "Rain Fade = Raindrop sizes match microwave wavelengths"
     }
   ],
 
