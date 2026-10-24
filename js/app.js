@@ -208,11 +208,11 @@ const UNIFIED_ROUTER = (() => {
       shortTitle: "Contemp World",
       monogram: "CW",
       terms: [
-        { id: "prelim", name: "Prelim", active: true, desc: "Weeks 1–5 Globalization Dimensions" },
-        { id: "midterm", name: "Midterm", active: false, desc: "Global Governance & Market Integration" },
+        { id: "midterm", name: "Midterm", active: true, desc: "Lessons 2 & 3: Global Structure & Regions" },
+        { id: "prelim", name: "Prelim", active: true, desc: "Unit 1: Introduction to Globalization" },
         { id: "final", name: "Final", active: false, desc: "Global Divides & Sustainability" }
       ],
-      defaultTerm: "prelim",
+      defaultTerm: "midterm",
       defaultTool: "cheatsheet"
     }
   };
@@ -330,11 +330,21 @@ const UNIFIED_ROUTER = (() => {
         mod.filterGuide(termId === "midterm" ? "midterm" : "all");
       }
       mod.renderView(toolId, container);
+    } else if (courseId === "cw") {
+      if (typeof mod.setTermFocus === "function") {
+        mod.setTermFocus(termId || "midterm");
+      }
+      if (toolId === "flashcards" && typeof mod.filterFlashcards === "function") {
+        mod.filterFlashcards(termId === "midterm" ? "midterm" : (termId === "prelim" ? "Unit 1" : "all"));
+      } else if (toolId === "guide" && typeof mod.filterGuide === "function") {
+        mod.filterGuide(termId === "midterm" ? "midterm" : (termId === "prelim" ? "all" : "all"));
+      } else if (toolId === "quiz" && typeof mod.setQuizMode === "function") {
+        mod.setQuizMode(termId || "midterm");
+      }
+      mod.renderView(toolId, container);
     } else {
-      // CW & HCI compatibility mapping
+      // HCI compatibility mapping
       let legacyTab = toolId;
-      if (courseId === "cw" && toolId === "cheatsheet") legacyTab = "overview";
-      if (courseId === "cw" && toolId === "guide") legacyTab = "guide";
       if (courseId === "hci" && toolId === "cheatsheet") legacyTab = "knowledge";
       mod.renderView(legacyTab, container);
     }
@@ -416,7 +426,7 @@ const UNIFIED_ROUTER = (() => {
                       isSelectedTerm ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400'
                     }">
                       <span>${term.name} Exam</span>
-                      ${term.id === 'midterm' && course.id === 'mobcom' ? '<span class="text-[9px] text-amber-600 dark:text-amber-400 font-bold">Focus</span>' : ''}
+                      
                     </div>
 
                     <!-- 4 Core Study Tools -->
@@ -580,13 +590,11 @@ const UNIFIED_ROUTER = (() => {
                         if (!t.active) {
                           return `<span class="py-1 text-center rounded bg-zinc-50 dark:bg-zinc-900/40 text-zinc-300 dark:text-zinc-700 text-[10px] select-none">${t.name}</span>`;
                         }
-                        const isMidFocus = c.id === 'mobcom' && t.id === 'midterm';
+                        
                         return `
                           <button
                             onclick="UNIFIED_ROUTER.selectTarget('${c.id}', '${t.id}', 'cheatsheet')"
-                            class="py-1 text-center rounded border border-zinc-200 dark:border-zinc-700/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[10px] font-medium transition-colors ${
-                              isMidFocus ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-900 text-amber-900 dark:text-amber-300 font-bold' : 'text-zinc-700 dark:text-zinc-300'
-                            }"
+                            class="py-1 text-center rounded border border-zinc-200 dark:border-zinc-700/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[10px] font-medium transition-colors text-zinc-700 dark:text-zinc-300"
                           >
                             ${t.name}
                           </button>
@@ -650,22 +658,41 @@ const UNIFIED_ROUTER = (() => {
       }
 
       // Delegate flashcard shortcuts
-      if (currentTool === "flashcards" && currentCourse === "mobcom") {
-        if (e.code === "Space") {
-          e.preventDefault();
-          MOBCOM_MODULE.toggleFlip();
-        } else if (e.key === "ArrowLeft") {
-          e.preventDefault();
-          MOBCOM_MODULE.prevCard();
-        } else if (e.key === "ArrowRight") {
-          e.preventDefault();
-          MOBCOM_MODULE.nextCard();
-        } else if (e.key === "1") {
-          e.preventDefault();
-          MOBCOM_MODULE.markCard(false);
-        } else if (e.key === "2") {
-          e.preventDefault();
-          MOBCOM_MODULE.markCard(true);
+      if (currentTool === "flashcards") {
+        if (currentCourse === "mobcom") {
+          if (e.code === "Space") {
+            e.preventDefault();
+            MOBCOM_MODULE.toggleFlip();
+          } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            MOBCOM_MODULE.prevCard();
+          } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            MOBCOM_MODULE.nextCard();
+          } else if (e.key === "1") {
+            e.preventDefault();
+            MOBCOM_MODULE.markCard(false);
+          } else if (e.key === "2") {
+            e.preventDefault();
+            MOBCOM_MODULE.markCard(true);
+          }
+        } else if (currentCourse === "cw") {
+          if (e.code === "Space") {
+            e.preventDefault();
+            CW_MODULE.toggleFlip();
+          } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            CW_MODULE.prevCard();
+          } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            CW_MODULE.nextCard();
+          } else if (e.key === "1") {
+            e.preventDefault();
+            CW_MODULE.markCard(false);
+          } else if (e.key === "2") {
+            e.preventDefault();
+            CW_MODULE.markCard(true);
+          }
         }
       }
     });

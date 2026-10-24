@@ -1,20 +1,40 @@
 /**
  * Unified Reviewer — Course Module: GEd 104 The Contemporary World
+ * Clean Minimalist Academic UI • Apple HIG Touch-First Mobile Ergonomics
+ * Focuses on Active Recall, Mnemonic Anchoring, and Spaced Retention
  */
 
 const CW_MODULE = (() => {
   let state = {
-    masteredCards: [],
-    learningCards: [],
+    // Mastery & Review State
+    cardMastery: {},       // { [cardId]: boolean }
+    guideReviewed: {},     // { [guideNum]: boolean }
     quizHistory: [],
     bestScore: 0,
-    selectedUnit: "all",
-    searchQuery: "",
+
+    // Flashcard State
+    selectedFlashcardUnit: "midterm",
     currentCardIndex: 0,
     isCardFlipped: false,
     filteredCards: [],
-    // Quiz state
-    quizSession: null
+
+    // Study Guide State
+    selectedGuideLesson: "midterm",
+    guideSearchQuery: "",
+    revealedGuideAnswers: {}, // { [guideNum]: boolean }
+
+    // Cheat Sheet State
+    termFocus: "midterm",
+    activeIntegrationStage: 1,
+
+    // Mock Exam State
+    quizSession: null,
+    selectedQuizScope: "midterm",
+    activeQuizQuestions: [],
+    hintTimer: null,
+    hintCooldownRemaining: 10,
+    isHintUnlocked: false,
+    isHintRevealed: false
   };
 
   function loadModuleState() {
@@ -22,7 +42,11 @@ const CW_MODULE = (() => {
       const raw = localStorage.getItem("unified_cw_state");
       if (raw) {
         const parsed = JSON.parse(raw);
-        state = { ...state, ...parsed };
+        state.cardMastery = parsed.cardMastery || {};
+        state.guideReviewed = parsed.guideReviewed || {};
+        state.quizHistory = parsed.quizHistory || [];
+        state.bestScore = parsed.bestScore || 0;
+        state.termFocus = parsed.termFocus || "midterm";
       }
     } catch (e) {
       console.warn("Failed to load CW state:", e);
@@ -32,28 +56,37 @@ const CW_MODULE = (() => {
   function saveModuleState() {
     try {
       localStorage.setItem("unified_cw_state", JSON.stringify({
-        masteredCards: state.masteredCards,
-        learningCards: state.learningCards,
+        cardMastery: state.cardMastery,
+        guideReviewed: state.guideReviewed,
         quizHistory: state.quizHistory,
-        bestScore: state.bestScore
+        bestScore: state.bestScore,
+        termFocus: state.termFocus
       }));
     } catch (e) {
       console.warn("Failed to save CW state:", e);
     }
   }
 
+  // ==========================================
+  // READINESS INDEX & BATSTATEU GRADING
+  // ==========================================
   function calculateReadiness() {
-    const totalCards = CW_DATA.flashcards.length;
-    const masteredCount = state.masteredCards.length;
-    const flashcardScore = (masteredCount / totalCards) * 40;
+    // Scope readiness to active midterm reviewer pointers
+    const midtermCards = CW_DATA.flashcards.filter(c => c.isMidterm !== false);
+    const masteredCount = midtermCards.filter(c => state.cardMastery[c.id] === true).length;
+    const flashcardScore = (masteredCount / Math.max(1, midtermCards.length)) * 35;
 
     let quizScore = 0;
     if (state.quizHistory.length > 0) {
       const latest = state.quizHistory[state.quizHistory.length - 1].scorePct;
-      quizScore = ((state.bestScore * 0.7) + (latest * 0.3)) * 0.6;
+      quizScore = ((state.bestScore * 0.7) + (latest * 0.3)) * 0.35;
     }
 
-    return Math.min(100, Math.max(0, Math.round(flashcardScore + quizScore)));
+    const midtermGuide = CW_DATA.guideQuestions.filter(g => g.isMidterm !== false);
+    const reviewedCount = midtermGuide.filter(g => state.guideReviewed[g.num] === true).length;
+    const guideScore = (reviewedCount / Math.max(1, midtermGuide.length)) * 30;
+
+    return Math.min(100, Math.max(0, Math.round(flashcardScore + quizScore + guideScore)));
   }
 
   function getBatStateUGrade(pct) {
@@ -71,13 +104,15 @@ const CW_MODULE = (() => {
 
   function init() {
     loadModuleState();
-    state.filteredCards = [...CW_DATA.flashcards];
+    filterFlashcards(state.selectedFlashcardUnit || "midterm");
   }
 
-  function renderView(tabId, container) {
-    switch (tabId) {
+  // Router View Dispatcher
+  function renderView(toolId, container) {
+    switch (toolId) {
+      case "cheatsheet":
       case "overview":
-        renderOverview(container);
+        renderCheatSheet(container);
         break;
       case "guide":
         renderStudyGuide(container);
@@ -89,368 +124,441 @@ const CW_MODULE = (() => {
         renderQuiz(container);
         break;
       default:
-        renderOverview(container);
+        renderCheatSheet(container);
     }
   }
 
-  // --- 1. OVERVIEW VIEW ---
-  function renderOverview(container) {
+  // ==========================================
+  // 1. CHEAT SHEET & QUICK REFERENCE VIEW
+  // ==========================================
+  function renderCheatSheet(container) {
     const readiness = calculateReadiness();
-    const masteredCount = state.masteredCards.length;
-    const totalCards = CW_DATA.flashcards.length;
-    const bestGrade = state.quizHistory.length > 0 ? getBatStateUGrade(state.bestScore) : null;
+    const isMidterm = state.termFocus !== "prelim";
+    const totalCards = CW_DATA.flashcards.filter(c => isMidterm ? c.isMidterm !== false : true).length;
+    const masteredCards = CW_DATA.flashcards.filter(c => (isMidterm ? c.isMidterm !== false : true) && state.cardMastery[c.id]).length;
+    const reviewedGuides = CW_DATA.guideQuestions.filter(g => (isMidterm ? g.isMidterm !== false : true) && state.guideReviewed[g.num]).length;
+    const totalGuides = CW_DATA.guideQuestions.filter(g => isMidterm ? g.isMidterm !== false : true).length;
+    const activeStage = CW_DATA.integrationStages.find(s => s.stage === state.activeIntegrationStage) || CW_DATA.integrationStages[0];
 
     container.innerHTML = `
-      <div class="space-y-8 animate-fade-in">
-        <!-- Readiness Hero Card -->
-        <div class="p-6 sm:p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm relative overflow-hidden">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-            <div class="space-y-2 max-w-xl">
-              <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-mono bg-zinc-200/80 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">
+      <div class="space-y-8 animate-fade-in pb-16 prose-container">
+        
+        <!-- Header & Scope Indicator -->
+        <div class="space-y-2 pb-5 border-b border-zinc-200/80 dark:border-zinc-800/80">
+          <div class="flex items-center justify-between">
+            <span class="quiet-chip">GEd 104 • ${isMidterm ? 'Midterm Examination Focus' : 'Preliminary & Midterm Scope'}</span>
+            <span class="text-[11px] font-mono text-zinc-400">BatStateU CICS • AY 2026–2027</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            The Contemporary World Study Reference
+          </h1>
+          <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            Memorization-engineered reference aligned with official pointers: <strong>Lesson 2 (Global Structure of Globalization)</strong> and <strong>Lesson 3 (World of Regions)</strong>, including high-yield mnemonics, active recall triggers, and integration ladders.
+          </p>
+        </div>
+
+        <!-- Readiness Index Hero Banner -->
+        <div class="ios-inset-card p-5 sm:p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                PRELIMINARY EXAM READINESS INDEX
+                ACTIVE RETENTION INDEX
               </div>
-              <h2 class="text-2xl sm:text-3xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
-                Units 1 & 2 Academic Mastery
-              </h2>
-              <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                Calculated from active recall flashcard retention (40%) and timed preliminary examination diagnostic performance (60%).
+              <h3 class="text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                Lessons 2 & 3 Examination Preparedness
+              </h3>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                Composite of flashcard active recall (35%), diagnostic mock test (35%), and guide drill completion (30%).
               </p>
             </div>
             
-            <div class="flex flex-col sm:flex-row items-baseline md:items-end gap-3 md:text-right">
-              <div class="text-5xl sm:text-6xl font-serif font-extrabold text-zinc-900 dark:text-zinc-100">
-                ${readiness}%
-              </div>
-              <span class="text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400">
-                ${readiness >= 75 ? "Exam Ready" : "In Progress"}
-              </span>
+            <div class="flex items-baseline sm:flex-col sm:items-end gap-2">
+              <span class="text-4xl sm:text-5xl font-serif font-extrabold text-zinc-900 dark:text-zinc-100">${readiness}%</span>
+              <span class="text-[10px] font-mono uppercase text-zinc-400">${readiness >= 75 ? "Exam Ready" : "In Progress"}</span>
             </div>
           </div>
 
           <!-- Progress Bar -->
-          <div class="w-full bg-zinc-200 dark:bg-zinc-800 h-2.5 rounded-full overflow-hidden mt-6">
+          <div class="w-full bg-zinc-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
             <div class="bg-zinc-900 dark:bg-zinc-100 h-full rounded-full transition-all duration-700" style="width: ${readiness}%"></div>
           </div>
-        </div>
 
-        <!-- Metrics Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
-            <span class="text-xs font-mono text-zinc-500 dark:text-zinc-400 font-medium">Flashcards Mastered</span>
-            <div class="text-2xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
-              ${masteredCount} <span class="text-sm font-sans font-normal text-zinc-500">/ ${totalCards}</span>
+          <!-- Quick Metrics Bar -->
+          <div class="grid grid-cols-3 gap-2 pt-2 text-center text-xs border-t border-zinc-200/60 dark:border-zinc-800/60 font-mono">
+            <div>
+              <span class="text-zinc-400 text-[10px] block">Mastered Cards</span>
+              <span class="font-bold text-zinc-800 dark:text-zinc-200">${masteredCards}/${totalCards}</span>
             </div>
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">${Math.round((masteredCount / totalCards) * 100)}% active recall retention</p>
-          </div>
-
-          <div class="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
-            <span class="text-xs font-mono text-zinc-500 dark:text-zinc-400 font-medium">Exam Simulator Attempts</span>
-            <div class="text-2xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
-              ${state.quizHistory.length}
+            <div>
+              <span class="text-zinc-400 text-[10px] block">Mock Best</span>
+              <span class="font-bold text-zinc-800 dark:text-zinc-200">${state.bestScore}%</span>
             </div>
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">High score: ${state.bestScore}%</p>
-          </div>
-
-          <div class="p-5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-1">
-            <span class="text-xs font-mono text-zinc-500 dark:text-zinc-400 font-medium">Grade Equivalent</span>
-            <div class="text-2xl font-serif font-bold ${bestGrade ? bestGrade.color : 'text-zinc-400'}">
-              ${bestGrade ? bestGrade.grade : '—'}
+            <div>
+              <span class="text-zinc-400 text-[10px] block">Guide Qs Reviewed</span>
+              <span class="font-bold text-zinc-800 dark:text-zinc-200">${reviewedGuides}/${totalGuides}</span>
             </div>
-            <p class="text-[11px] text-zinc-500 dark:text-zinc-400">${bestGrade ? bestGrade.desc : 'Complete an exam simulation'}</p>
           </div>
         </div>
 
-        <!-- Scope Launchers -->
+        <!-- ============================================================== -->
+        <!-- MEMORIZATION ACCELERATOR: MNEMONIC ARCHITECTURE                 -->
+        <!-- ============================================================== -->
         <div class="space-y-4">
-          <h3 class="text-sm font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">
-            Preliminary Examination Scope
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Unit 1 Card -->
-            <div class="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-4 flex flex-col justify-between">
-              <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-mono px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">Weeks 1–2</span>
-                  <span class="text-xs font-mono text-zinc-500">13 Cards</span>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+              🧠 Core Memory Anchors & Mnemonics
+            </span>
+            <span class="text-[10px] font-mono text-zinc-400">High-Yield Retention</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <!-- Mnemonic 1: P-G-T-S -->
+            <div class="ios-inset-card p-4 space-y-2.5">
+              <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="text-xs font-mono font-bold text-zinc-900 dark:text-zinc-100">P-G-T-S</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold">4 Elements of State</span>
+              </div>
+              <div class="text-[11px] font-mono text-zinc-500 italic">"People Govern Their State"</div>
+              <div class="space-y-1.5 text-xs">
+                <div class="flex items-baseline gap-2">
+                  <span class="w-5 h-5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-mono font-bold text-[10px] flex items-center justify-center shrink-0">P</span>
+                  <div><strong>Population:</strong> <span class="text-zinc-600 dark:text-zinc-300">The people living in the state.</span></div>
                 </div>
-                <h4 class="text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100">
-                  Unit 1: Introduction to Globalization
+                <div class="flex items-baseline gap-2">
+                  <span class="w-5 h-5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-mono font-bold text-[10px] flex items-center justify-center shrink-0">G</span>
+                  <div><strong>Government:</strong> <span class="text-zinc-600 dark:text-zinc-300">The system managing and organizing the state.</span></div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span class="w-5 h-5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-mono font-bold text-[10px] flex items-center justify-center shrink-0">T</span>
+                  <div><strong>Territory:</strong> <span class="text-zinc-600 dark:text-zinc-300">Defined land, water, and airspace.</span></div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span class="w-5 h-5 rounded bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-mono font-bold text-[10px] flex items-center justify-center shrink-0">S</span>
+                  <div><strong>Sovereignty:</strong> <span class="text-zinc-600 dark:text-zinc-300">Power to govern itself without outside control.</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mnemonic 2: BRICS -->
+            <div class="ios-inset-card p-4 space-y-2.5">
+              <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="text-xs font-mono font-bold text-zinc-900 dark:text-zinc-100">B-R-I-C-S</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold">Emerging Giants</span>
+              </div>
+              <div class="text-[11px] font-mono text-zinc-500 italic">"Growing consumer markets + Lower production costs"</div>
+              <div class="grid grid-cols-5 gap-1.5 text-center font-mono text-[10px] py-1">
+                <div class="p-1.5 rounded bg-zinc-100 dark:bg-zinc-800 font-bold">B<br><span class="font-normal text-[9px] text-zinc-500">Brazil</span></div>
+                <div class="p-1.5 rounded bg-zinc-100 dark:bg-zinc-800 font-bold">R<br><span class="font-normal text-[9px] text-zinc-500">Russia</span></div>
+                <div class="p-1.5 rounded bg-zinc-100 dark:bg-zinc-800 font-bold">I<br><span class="font-normal text-[9px] text-zinc-500">India</span></div>
+                <div class="p-1.5 rounded bg-zinc-100 dark:bg-zinc-800 font-bold">C<br><span class="font-normal text-[9px] text-zinc-500">China</span></div>
+                <div class="p-1.5 rounded bg-zinc-100 dark:bg-zinc-800 font-bold">S<br><span class="font-normal text-[9px] text-zinc-500">S. Africa</span></div>
+              </div>
+              <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed text-[11px]">
+                Prime foreign direct investment (FDI) targets: businesses expand here because of rapidly expanding domestic markets and lower manufacturing costs.
+              </p>
+            </div>
+
+            <!-- Mnemonic 3: Golden Straitjacket vs. Electronic Herd -->
+            <div class="ios-inset-card p-4 space-y-2 md:col-span-2">
+              <div class="flex items-center justify-between pb-1.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="text-xs font-mono font-bold text-zinc-900 dark:text-zinc-100">Friedman's Dialectic: Straitjacket vs. Herd</span>
+                <span class="text-[10px] font-mono text-zinc-400">Market Pressures</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-1">
+                  <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 text-xs block">Golden Straitjacket (The State)</span>
+                  <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                    Forced choice on nations to adopt neoliberal policies. The core consequence: <strong>the economy grows while politics shrinks</strong> (narrowing of democratic policy alternatives).
+                  </p>
+                </div>
+                <div class="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-1">
+                  <span class="font-mono font-bold text-zinc-900 dark:text-zinc-100 text-xs block">Electronic Herd (Global Investors)</span>
+                  <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                    International currency/stock investors who <strong>quickly move billions from country to country</strong>, instantly rewarding reform and mercilessly punishing uncompetitive states.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- INTERACTIVE LADDER: 7 STAGES OF ECONOMIC INTEGRATION           -->
+        <!-- ============================================================== -->
+        <div class="ios-inset-card p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-2 border-b border-zinc-200/60 dark:border-zinc-800/60">
+            <div>
+              <span class="font-mono text-[10px] text-zinc-400 uppercase tracking-wider block">Ladder of Regional Integration</span>
+              <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                The 7 Stages of Economic Integration
+              </h3>
+            </div>
+            <span class="text-[11px] font-mono text-zinc-500">Mnemonic: P-F-C-C-E-E-C</span>
+          </div>
+
+          <!-- Stepper Tab Navigation -->
+          <div class="grid grid-cols-7 gap-1 overflow-x-auto pb-1">
+            ${CW_DATA.integrationStages.map(s => {
+              const isActive = s.stage === state.activeIntegrationStage;
+              return `
+                <button
+                  onclick="CW_MODULE.selectIntegrationStage(${s.stage})"
+                  class="py-2 px-1 rounded-lg text-center font-mono text-[10px] sm:text-xs transition-all ${
+                    isActive
+                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold shadow-sm'
+                      : 'bg-zinc-100 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
+                  }"
+                >
+                  <span class="block text-[9px] opacity-70">S${s.stage}</span>
+                  <span class="truncate block font-bold">${s.acronym}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Active Stage Card -->
+          <div class="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200/80 dark:border-zinc-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-md bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-mono text-xs font-bold flex items-center justify-center">
+                  ${activeStage.stage}
+                </span>
+                <h4 class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm">
+                  ${activeStage.name}
                 </h4>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  Steger's definition, IMF economic view, Silk Road, 6 Enablers, 4 Characteristics, 5 Historical Periods, 6 Dimensions, 5 Claims, and 8 Roman Catholic Principles.
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-200/80 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-semibold">
+                ${activeStage.scope}
+              </span>
+            </div>
+            <p class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+              ${activeStage.keyFeature}
+            </p>
+            <div class="text-[11px] font-mono text-zinc-500 pt-1 border-t border-zinc-200/50 dark:border-zinc-700/50">
+              📌 Real-World Example: <span class="text-zinc-700 dark:text-zinc-300">${activeStage.example}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- PART 1: LESSON 2 — GLOBAL STRUCTURE OF GLOBALIZATION           -->
+        <!-- ============================================================== -->
+        <div class="space-y-5 pt-2">
+          <div class="pb-2 border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between">
+            <div>
+              <span class="font-mono text-[10px] text-zinc-400 uppercase tracking-wider block">Curriculum Section I</span>
+              <h2 class="text-lg sm:text-xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                Lesson 2: Global Structure of Globalization
+              </h2>
+            </div>
+            <span class="text-[11px] font-mono text-zinc-500">Core Midterm Coverage</span>
+          </div>
+
+          <!-- 1.1 Market, Stock, and Financial Integration -->
+          <div class="ios-inset-card p-4 sm:p-5 space-y-3.5">
+            <div class="space-y-1">
+              <span class="font-mono text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Lesson 2.1</span>
+              <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                Market, Stock Market, & Financial Market Integration
+              </h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-2 border border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-zinc-900 dark:text-zinc-100 font-bold block text-xs">1. Market Integration</span>
+                <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                  The movement of prices of related goods and services sold in a defined geographical location in similar patterns.
+                </p>
+                <div class="text-[10px] font-mono text-zinc-500 bg-white dark:bg-zinc-900 p-2 rounded border border-zinc-200/60 dark:border-zinc-700/60">
+                  ⛽ Oil in Country X & Country Y becomes similar because they trade oil freely.
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-2 border border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-zinc-900 dark:text-zinc-100 font-bold block text-xs">2. Stock Market Integration</span>
+                <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                  Happens when stock markets in different countries move in the same direction. Stocks rise and fall together across borders.
+                </p>
+                <div class="text-[10px] font-mono text-zinc-500 bg-white dark:bg-zinc-900 p-2 rounded border border-zinc-200/60 dark:border-zinc-700/60">
+                  📈 Synchronous co-movement proves cross-border financial linkage.
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-2 border border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-zinc-900 dark:text-zinc-100 font-bold block text-xs">3. Financial Market Integration</span>
+                <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                  An open market economy facilitated by a common currency and eliminating technical, regulatory, and tax differences.
+                </p>
+                <div class="text-[10px] font-mono text-zinc-500 bg-white dark:bg-zinc-900 p-2 rounded border border-zinc-200/60 dark:border-zinc-700/60">
+                  💶 Common currency + elimination of technical/tax barriers.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1.2 Global Corporations, FDI, and GATS -->
+          <div class="ios-inset-card p-4 sm:p-5 space-y-3.5">
+            <div class="space-y-1">
+              <span class="font-mono text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Lesson 2.2</span>
+              <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                Global Corporations, Foreign Direct Investment, & GATS
+              </h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5 border border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-zinc-900 dark:text-zinc-100 font-bold block text-xs">Global Corporations & FDI</span>
+                <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                  <strong>Global Corporation:</strong> A business that operates in two or more countries.<br>
+                  <strong>FDI:</strong> Major driver of global corporate development. Occurs when a company invests <em>money, technology, and management skills</em> from one country to build a business or factory in another.
                 </p>
               </div>
-              <div class="flex items-center gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-                <button onclick="UNIFIED_ROUTER.switchTab('guide'); CW_MODULE.filterGuideUnit('unit1')" class="flex-1 py-2 rounded-lg text-xs font-medium border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">
-                  Study Guide
-                </button>
-                <button onclick="UNIFIED_ROUTER.switchTab('flashcards'); CW_MODULE.filterFlashcards('Unit 1')" class="flex-1 py-2 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors">
-                  Flashcards
-                </button>
-              </div>
-            </div>
 
-            <!-- Unit 2 Card -->
-            <div class="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-4 flex flex-col justify-between">
-              <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-mono px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">Weeks 3–5</span>
-                  <span class="text-xs font-mono text-zinc-500">12 Cards</span>
-                </div>
-                <h4 class="text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100">
-                  Unit 2: The Structures of Globalization
-                </h4>
-                <p class="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  Comparative Advantage, Gold Standard, Bretton Woods System, 3 Exchange Regimes, Trade Policies (TIDA, TIFA, WTO), Outsourcing, Golden Straitjacket, and 7 Stages of Integration.
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5 border border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-zinc-900 dark:text-zinc-100 font-bold block text-xs">GATS (Uruguay Round, 1995)</span>
+                <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                  <strong>General Agreement on Trade in Services:</strong> The first multilateral agreement covering trade in services, negotiated during the Uruguay Round of multilateral trade negotiations, and entered into force in <strong>1995</strong>.
                 </p>
               </div>
-              <div class="flex items-center gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800">
-                <button onclick="UNIFIED_ROUTER.switchTab('guide'); CW_MODULE.filterGuideUnit('unit2')" class="flex-1 py-2 rounded-lg text-xs font-medium border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">
-                  Study Guide
-                </button>
-                <button onclick="UNIFIED_ROUTER.switchTab('flashcards'); CW_MODULE.filterFlashcards('Unit 2')" class="flex-1 py-2 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors">
-                  Flashcards
-                </button>
+            </div>
+          </div>
+
+          <!-- 1.3 Statehood, UN Roles, Peacekeeping, and Governance -->
+          <div class="ios-inset-card p-4 sm:p-5 space-y-3.5">
+            <div class="space-y-1">
+              <span class="font-mono text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Lesson 2.3</span>
+              <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                Statehood, UN Peacekeeping, & Contemporary Global Governance
+              </h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5 border border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-zinc-900 dark:text-zinc-100 font-bold block text-xs">Roles of the United Nations</span>
+                <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                  The UN promotes international cooperation and creates and maintains international order.<br>
+                  <strong class="text-zinc-900 dark:text-zinc-100">Exam Alert:</strong> To prevent taking a stance on politics, <strong>peacekeeping is kept to be the MOST important feature of UN activity</strong> in peace and security.
+                </p>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5 border border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-zinc-900 dark:text-zinc-100 font-bold block text-xs">Global Governance & Movements</span>
+                <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                  <strong>Global Governance:</strong> Sum of laws, norms, policies, and institutions mediating trans-border relations between states, cultures, citizens, IGOs, and markets.<br>
+                  <strong>Global Justice Movement:</strong> Believes global economic systems must be fairer and more equal.
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Recent Attempts -->
-        ${state.quizHistory.length > 0 ? `
-          <div class="space-y-3">
-            <h3 class="text-sm font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">
-              Recent Exam Simulations
-            </h3>
-            <div class="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 overflow-hidden">
-              ${state.quizHistory.slice(-3).reverse().map(h => {
-                const g = getBatStateUGrade(h.scorePct);
-                return `
-                  <div class="p-4 flex items-center justify-between text-xs">
-                    <div>
-                      <strong class="text-zinc-900 dark:text-zinc-100 block font-medium">${h.date} • ${h.mode === 'timed' ? '⏱ Timed' : '💡 Practice'}</strong>
-                      <span class="text-zinc-500 dark:text-zinc-400">${h.correct} / ${h.total} (${h.scorePct}%)</span>
-                    </div>
-                    <div class="text-right">
-                      <span class="font-mono font-bold ${g.color}">${g.grade}</span>
-                      <span class="text-[10px] text-zinc-500 block">${g.desc.split('•')[0]}</span>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
+        <!-- ============================================================== -->
+        <!-- PART 2: LESSON 3 — WORLD OF REGIONS                            -->
+        <!-- ============================================================== -->
+        <div class="space-y-5 pt-2">
+          <div class="pb-2 border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between">
+            <div>
+              <span class="font-mono text-[10px] text-zinc-400 uppercase tracking-wider block">Curriculum Section II</span>
+              <h2 class="text-lg sm:text-xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                Lesson 3: World of Regions
+              </h2>
+            </div>
+            <span class="text-[11px] font-mono text-zinc-500">Global North, South, & Asia</span>
+          </div>
+
+          <!-- Global North vs. Global South Table -->
+          <div class="ios-inset-card p-4 sm:p-5 space-y-3.5">
+            <div class="space-y-1">
+              <span class="font-mono text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Lesson 3.1</span>
+              <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                Global North vs. Global South (Climate & Economics)
+              </h3>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-zinc-100 dark:bg-zinc-800/70 font-mono text-[10px] uppercase text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
+                  <tr>
+                    <th class="py-2.5 px-3">Dimension</th>
+                    <th class="py-2.5 px-3">Global North</th>
+                    <th class="py-2.5 px-3">Global South</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800 text-[11px]">
+                  ${CW_DATA.northSouthMatrix.map(m => `
+                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
+                      <td class="py-2.5 px-3 font-mono font-bold text-zinc-900 dark:text-zinc-100">${m.dimension}</td>
+                      <td class="py-2.5 px-3 text-zinc-600 dark:text-zinc-300 leading-relaxed">${m.globalNorth}</td>
+                      <td class="py-2.5 px-3 text-zinc-600 dark:text-zinc-300 leading-relaxed">${m.globalSouth}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
             </div>
           </div>
-        ` : ''}
+
+          <!-- Asia and South Pacific -->
+          <div class="ios-inset-card p-4 sm:p-5 space-y-3">
+            <div class="space-y-1">
+              <span class="font-mono text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Lesson 3.2</span>
+              <h3 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">
+                Asia and the South Pacific: Laboratories of Modernity
+              </h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5 border border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-zinc-900 dark:text-zinc-100 font-bold block text-xs">"Laboratories of Modernity"</span>
+                <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                  Asia Pacific is a rising political force. Because it rapidly pioneers novel models of technology, urbanization, and manufacturing, it is termed the <strong>"laboratories of modernity"</strong>.
+                </p>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 space-y-1.5 border border-zinc-200/60 dark:border-zinc-800/60">
+                <span class="font-mono text-zinc-900 dark:text-zinc-100 font-bold block text-xs">Historical vs. External Globalization</span>
+                <p class="text-zinc-600 dark:text-zinc-400 text-[11px] leading-relaxed">
+                  • <strong>Early Modern Economy:</strong> Asia was the central force, hosting the world's most vital trade routes and advanced technology.<br>
+                  • <strong>Contemporary Era:</strong> Often perceived as an external phenomenon pushed in by Western powers (US & Europe).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     `;
   }
 
-  // --- 2. STUDY GUIDE VIEW ---
-  function renderStudyGuide(container) {
-    container.innerHTML = `
-      <div class="space-y-6 animate-fade-in">
-        <!-- Sub-header with Search and Unit Filter -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
-          <div class="relative flex-1">
-            <input
-              type="text"
-              id="cw-guide-search"
-              placeholder="Search topics, terms, theories..."
-              value="${state.searchQuery}"
-              oninput="CW_MODULE.onSearch(this.value)"
-              class="w-full px-3.5 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500"
-            />
-          </div>
-          <div class="flex items-center gap-1.5 overflow-x-auto">
-            <button onclick="CW_MODULE.filterGuideUnit('all')" class="guide-unit-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${state.selectedUnit === 'all' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">All Units</button>
-            <button onclick="CW_MODULE.filterGuideUnit('unit1')" class="guide-unit-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${state.selectedUnit === 'unit1' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Unit 1</button>
-            <button onclick="CW_MODULE.filterGuideUnit('unit2')" class="guide-unit-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${state.selectedUnit === 'unit2' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Unit 2</button>
-          </div>
-        </div>
-
-        <!-- Render Content -->
-        <div id="cw-guide-content-area" class="space-y-10">
-          ${renderGuideTopicsHTML()}
-        </div>
-      </div>
-    `;
-  }
-
-  function renderGuideTopicsHTML() {
-    const unitsToRender = state.selectedUnit === "all" ? ["unit1", "unit2"] : [state.selectedUnit];
-    let html = "";
-
-    unitsToRender.forEach(unitKey => {
-      const u = CW_DATA.studyGuide[unitKey];
-      if (!u) return;
-
-      const filteredTopics = u.topics.filter(t => {
-        if (!state.searchQuery) return true;
-        const q = state.searchQuery.toLowerCase();
-        return t.topicTitle.toLowerCase().includes(q) ||
-               t.description.toLowerCase().includes(q) ||
-               JSON.stringify(t).toLowerCase().includes(q);
-      });
-
-      if (filteredTopics.length === 0) return;
-
-      html += `
-        <div class="space-y-6">
-          <div class="pb-2 border-b border-zinc-200 dark:border-zinc-800">
-            <span class="text-xs font-mono uppercase text-zinc-500 font-semibold">${u.weeks}</span>
-            <h3 class="text-xl font-serif font-bold text-zinc-900 dark:text-zinc-100">${u.title}</h3>
-          </div>
-          <div class="space-y-8">
-            ${filteredTopics.map(topic => renderTopicCardHTML(topic)).join('')}
-          </div>
-        </div>
-      `;
-    });
-
-    return html || `<div class="p-8 text-center text-sm text-zinc-500">No matching topics found for "${state.searchQuery}".</div>`;
-  }
-
-  function renderTopicCardHTML(topic) {
-    let bodyHTML = "";
-
-    if (topic.type === "concept-cards") {
-      bodyHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-          ${topic.cards.map(c => `
-            <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-2">
-              <div class="flex items-center justify-between">
-                <h5 class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm">${c.title}</h5>
-                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 font-medium">${c.badge}</span>
-              </div>
-              <p class="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">${c.body}</p>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } else if (topic.type === "enumeration") {
-      bodyHTML = `
-        <div class="space-y-2.5">
-          ${topic.items.map(it => `
-            <div class="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5">
-              <strong class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 block font-mono">${it.title}</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">${it.detail}</p>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } else if (topic.type === "timeline") {
-      bodyHTML = `
-        <div class="space-y-3 pl-2">
-          ${topic.items.map(it => `
-            <div class="v-timeline-item space-y-1">
-              <div class="v-timeline-dot"></div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-mono font-bold text-zinc-900 dark:text-zinc-100">${it.era}</span>
-                <span class="text-[11px] font-mono text-zinc-500">(${it.dates})</span>
-              </div>
-              <p class="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">${it.summary}</p>
-              <span class="inline-block text-[11px] font-mono text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">💡 ${it.highlight}</span>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } else if (topic.type === "comparison") {
-      bodyHTML = `
-        <div class="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-zinc-100 dark:bg-zinc-800/60 font-mono text-[11px] uppercase tracking-wider text-zinc-700 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-800">
-              <tr>
-                <th class="py-2.5 px-3.5">Dimension</th>
-                <th class="py-2.5 px-3.5">${topic.col1Title}</th>
-                <th class="py-2.5 px-3.5">${topic.col2Title}</th>
-                ${topic.col3Title ? `<th class="py-2.5 px-3.5">${topic.col3Title}</th>` : ''}
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
-              ${topic.dimensions.map(d => `
-                <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
-                  <td class="py-2.5 px-3.5 font-mono font-semibold text-zinc-900 dark:text-zinc-100">${d.dim}</td>
-                  <td class="py-2.5 px-3.5 leading-relaxed">${d.col1}</td>
-                  <td class="py-2.5 px-3.5 leading-relaxed">${d.col2}</td>
-                  ${d.col3 ? `<td class="py-2.5 px-3.5 leading-relaxed">${d.col3}</td>` : ''}
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } else if (topic.type === "tree") {
-      bodyHTML = `
-        <div class="space-y-3">
-          ${topic.branches.map(b => `
-            <div class="tree-branch space-y-1">
-              <strong class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 block font-mono">${b.name}</strong>
-              <p class="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">${b.desc}</p>
-              ${b.example ? `<span class="text-[11px] text-zinc-500 italic block">Example: ${b.example}</span>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      `;
-    } else if (topic.type === "flow") {
-      bodyHTML = `
-        <div class="space-y-2">
-          ${topic.steps.map(s => `
-            <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
-              <div class="flex items-center gap-2">
-                <span class="w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-800 font-mono text-[10px] flex items-center justify-center font-bold text-zinc-800 dark:text-zinc-200">${s.step}</span>
-                <strong class="text-xs font-semibold text-zinc-900 dark:text-zinc-100">${s.title}</strong>
-              </div>
-              <div class="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed pl-7">${s.text}</div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    return `
-      <div class="p-5 sm:p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 space-y-4">
-        <div class="space-y-1">
-          <div class="flex items-center justify-between gap-2 flex-wrap">
-            <h4 class="text-base font-serif font-bold text-zinc-900 dark:text-zinc-100">${topic.topicTitle}</h4>
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400">${topic.approachBadge}</span>
-          </div>
-          <p class="text-xs text-zinc-500 dark:text-zinc-400">${topic.description}</p>
-        </div>
-        ${bodyHTML}
-      </div>
-    `;
-  }
-
-  // --- 3. FLASHCARDS VIEW ---
+  // ==========================================
+  // 2. FLASHCARDS VIEW (WITH SOUND & KEYBOARD)
+  // ==========================================
   function renderFlashcards(container) {
     const card = state.filteredCards[state.currentCardIndex] || state.filteredCards[0];
     const total = state.filteredCards.length;
     const currentNum = total > 0 ? state.currentCardIndex + 1 : 0;
-    const isMastered = card ? state.masteredCards.includes(card.id) : false;
-    const isLearning = card ? state.learningCards.includes(card.id) : false;
+    const isMastered = card ? state.cardMastery[card.id] === true : false;
 
     container.innerHTML = `
-      <div class="space-y-6 max-w-2xl mx-auto animate-fade-in">
+      <div class="space-y-6 max-w-2xl mx-auto animate-fade-in pb-12">
         <!-- Controls Header -->
         <div class="flex items-center justify-between gap-2 flex-wrap pb-3 border-b border-zinc-200 dark:border-zinc-800">
-          <div class="flex items-center gap-1.5">
-            <button onclick="CW_MODULE.filterFlashcards('all')" class="flashcard-filter-btn px-2.5 py-1 rounded text-xs font-medium ${state.selectedUnit === 'all' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">All (25)</button>
-            <button onclick="CW_MODULE.filterFlashcards('Unit 1')" class="flashcard-filter-btn px-2.5 py-1 rounded text-xs font-medium ${state.selectedUnit === 'Unit 1' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Unit 1 (13)</button>
-            <button onclick="CW_MODULE.filterFlashcards('Unit 2')" class="flashcard-filter-btn px-2.5 py-1 rounded text-xs font-medium ${state.selectedUnit === 'Unit 2' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Unit 2 (12)</button>
+          <div class="flex items-center gap-1.5 overflow-x-auto">
+            <button onclick="CW_MODULE.filterFlashcards('midterm')" class="flashcard-filter-btn px-2.5 py-1 rounded text-xs font-mono font-medium ${state.selectedFlashcardUnit === 'midterm' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Midterm Lessons 2 & 3</button>
+            <button onclick="CW_MODULE.filterFlashcards('Lesson 2')" class="flashcard-filter-btn px-2.5 py-1 rounded text-xs font-mono font-medium ${state.selectedFlashcardUnit === 'Lesson 2' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Lesson 2</button>
+            <button onclick="CW_MODULE.filterFlashcards('Lesson 3')" class="flashcard-filter-btn px-2.5 py-1 rounded text-xs font-mono font-medium ${state.selectedFlashcardUnit === 'Lesson 3' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">Lesson 3</button>
+            <button onclick="CW_MODULE.filterFlashcards('all')" class="flashcard-filter-btn px-2.5 py-1 rounded text-xs font-mono font-medium ${state.selectedFlashcardUnit === 'all' ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-bold' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400'}">All (${CW_DATA.flashcards.length})</button>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="CW_MODULE.shuffleFlashcards()" class="px-2.5 py-1 rounded text-xs font-mono font-semibold border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-              🔀 Shuffle
-            </button>
-          </div>
+          <button onclick="CW_MODULE.shuffleFlashcards()" class="px-2.5 py-1 rounded text-xs font-mono font-semibold border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            🔀 Shuffle
+          </button>
         </div>
 
         <!-- Progress Indicator -->
         <div class="space-y-1.5">
           <div class="flex items-center justify-between text-xs font-mono text-zinc-500">
             <span>Card ${currentNum} of ${total}</span>
-            <span>${state.masteredCards.length} Mastered (${Math.round((state.masteredCards.length / CW_DATA.flashcards.length) * 100)}%)</span>
+            <span>${Object.values(state.cardMastery).filter(Boolean).length} Mastered</span>
           </div>
           <div class="w-full bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
             <div class="bg-zinc-900 dark:bg-zinc-100 h-full rounded-full transition-all duration-300" style="width: ${total > 0 ? (currentNum / total) * 100 : 0}%"></div>
@@ -464,14 +572,14 @@ const CW_MODULE = (() => {
               id="cw-flashcard-flipper"
               onclick="CW_MODULE.toggleFlip()"
               class="flashcard ${state.isCardFlipped ? 'flipped' : ''} cursor-pointer select-none"
-              style="min-height: 280px;"
+              style="min-height: 290px;"
             >
-              <div class="flashcard-inner transform-style-3d relative w-full h-full" style="min-height: 280px;">
+              <div class="flashcard-inner transform-style-3d relative w-full h-full" style="min-height: 290px;">
                 <!-- Front Face -->
                 <div class="flashcard-front backface-hidden absolute inset-0 p-6 sm:p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
                   <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold">${card.unit} • ${card.typeBadge}</span>
-                    <span class="text-xs font-mono text-zinc-400">Click or Space to flip</span>
+                    <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">${card.unit} • ${card.typeBadge}</span>
+                    <span class="text-xs font-mono text-zinc-400">Tap or Space to Flip</span>
                   </div>
                   <div class="my-auto py-4 text-center">
                     <h3 class="text-lg sm:text-xl font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
@@ -479,7 +587,7 @@ const CW_MODULE = (() => {
                     </h3>
                   </div>
                   <div class="text-center text-[11px] font-mono text-zinc-500 italic">
-                    💡 Hint: ${card.hint}
+                    💡 Memory Cue: ${card.hint}
                   </div>
                 </div>
 
@@ -489,36 +597,36 @@ const CW_MODULE = (() => {
                     <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-zinc-800 dark:bg-zinc-200 text-zinc-300 dark:text-zinc-700 font-semibold">${card.typeBadge}</span>
                     <span class="text-xs font-mono opacity-60">Answer</span>
                   </div>
-                  <div class="my-auto py-4">
-                    <p class="text-sm sm:text-base leading-relaxed whitespace-pre-line text-zinc-200 dark:text-zinc-800">
+                  <div class="my-auto py-4 flashcard-body-scroll">
+                    <p class="text-xs sm:text-sm leading-relaxed whitespace-pre-line text-zinc-200 dark:text-zinc-800">
                       ${card.back}
                     </p>
                   </div>
-                  <div class="text-center text-[11px] font-mono opacity-60">
-                    Click to flip back
+                  <div class="text-center text-[10px] font-mono opacity-60">
+                    Tap to flip back
                   </div>
                 </div>
               </div>
             </div>
           </div>
         ` : `
-          <div class="p-12 text-center text-zinc-500">No cards available in this filter.</div>
+          <div class="p-12 text-center text-zinc-500">No cards found in this filter.</div>
         `}
 
-        <!-- Actions -->
-        <div class="flex items-center justify-between gap-3 pt-2">
-          <button onclick="CW_MODULE.prevCard()" class="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+        <!-- Tactile iOS Actions -->
+        <div class="flex items-center justify-between gap-2.5 pt-2">
+          <button onclick="CW_MODULE.prevCard()" class="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
             ◀ Prev
           </button>
-          <div class="flex items-center gap-2">
-            <button onclick="CW_MODULE.markCard(false)" class="px-3.5 py-2.5 rounded-xl text-xs font-medium border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition-colors">
-              ⟳ Still Learning
+          <div class="flex items-center gap-2 flex-1 justify-center max-w-xs">
+            <button onclick="CW_MODULE.markCard(false)" class="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition-colors">
+              Still Learning
             </button>
-            <button onclick="CW_MODULE.markCard(true)" class="px-3.5 py-2.5 rounded-xl text-xs font-medium border border-emerald-300 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">
+            <button onclick="CW_MODULE.markCard(true)" class="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-emerald-300 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 transition-colors">
               ★ Mastered
             </button>
           </div>
-          <button onclick="CW_MODULE.nextCard()" class="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+          <button onclick="CW_MODULE.nextCard()" class="px-3.5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
             Next ▶
           </button>
         </div>
@@ -530,7 +638,9 @@ const CW_MODULE = (() => {
     `;
   }
 
-  // --- 4. EXAM SIMULATOR VIEW ---
+  // ==========================================
+  // 3. MOCK EXAM VIEW (WITH THINK-FIRST HINTS)
+  // ==========================================
   function renderQuiz(container) {
     if (!state.quizSession) {
       renderQuizLanding(container);
@@ -542,27 +652,32 @@ const CW_MODULE = (() => {
   }
 
   function renderQuizLanding(container) {
+    const isMidterm = state.termFocus !== "prelim";
+    const availableQuestions = isMidterm
+      ? CW_DATA.quizQuestions.filter(q => q.isMidterm !== false)
+      : CW_DATA.quizQuestions;
+
     container.innerHTML = `
       <div class="max-w-xl mx-auto space-y-6 text-center animate-fade-in py-6">
         <div class="space-y-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-            <span>🎯</span> 15 COMPREHENSIVE PRELIM ITEMS
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">
+            <span>🎯</span> ${availableQuestions.length} ACTIVE RECALL ITEMS AVAILABLE
           </div>
           <h2 class="text-2xl sm:text-3xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
-            Preliminary Examination Simulator
+            ${isMidterm ? 'Midterm Examination Simulator' : 'Comprehensive Examination Simulator'}
           </h2>
           <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            Test your knowledge across Unit 1 and Unit 2 with randomized multiple choice items, BatStateU grading transmutation, and in-depth rationales.
+            Test your command of <strong>Lesson 2 (Global Structure)</strong> and <strong>Lesson 3 (World of Regions)</strong>. Features a 10-second Think-First Hint cooldown and randomized option shuffling to prevent positional cramming.
           </p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left pt-2">
-          <div class="p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-3 flex flex-col justify-between">
+          <div class="ios-inset-card p-5 space-y-3 flex flex-col justify-between">
             <div class="space-y-1">
-              <span class="text-xs font-mono text-zinc-500 font-semibold">Mode 1</span>
+              <span class="text-xs font-mono text-zinc-400 font-semibold">Mode 1</span>
               <h4 class="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-base">Practice Mode</h4>
               <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                Untimed session with immediate answer validation and detailed textbook explanations after each question.
+                Untimed session with instant textbook rationale and Think-First pedagogical hints.
               </p>
             </div>
             <button onclick="CW_MODULE.startQuiz('practice')" class="w-full py-2.5 rounded-xl text-xs font-semibold bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 transition-colors">
@@ -575,7 +690,7 @@ const CW_MODULE = (() => {
               <span class="text-xs font-mono opacity-60 font-semibold">Mode 2</span>
               <h4 class="font-serif font-bold text-base">Timed Simulation</h4>
               <p class="text-xs opacity-80 leading-relaxed">
-                25-minute strict countdown timer, question flagging, and comprehensive diagnostic report upon completion.
+                25-minute countdown, question flagging, and BatStateU grade transmutation upon completion.
               </p>
             </div>
             <button onclick="CW_MODULE.startQuiz('timed')" class="w-full py-2.5 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white hover:opacity-90 transition-opacity">
@@ -585,6 +700,126 @@ const CW_MODULE = (() => {
         </div>
       </div>
     `;
+  }
+
+  function startQuiz(mode, customQuestions = null) {
+    let questionsPool = customQuestions;
+    if (!questionsPool) {
+      const isMidterm = state.termFocus !== "prelim";
+      questionsPool = isMidterm
+        ? CW_DATA.quizQuestions.filter(q => q.isMidterm !== false)
+        : [...CW_DATA.quizQuestions];
+    }
+
+    // Fisher-Yates Shuffle questions & options
+    const shuffled = questionsPool.map(q => {
+      const opts = [...q.options];
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
+      }
+      return { ...q, options: opts };
+    });
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    state.quizSession = {
+      mode,
+      questions: shuffled,
+      currentIndex: 0,
+      userAnswers: {},
+      flagged: {},
+      timeRemaining: 1500, // 25 mins
+      timerInterval: null,
+      isFinished: false
+    };
+
+    resetHintCooldown();
+
+    if (mode === "timed") {
+      state.quizSession.timerInterval = setInterval(() => {
+        if (!state.quizSession || state.quizSession.isFinished) {
+          clearInterval(state.quizSession?.timerInterval);
+          return;
+        }
+        state.quizSession.timeRemaining--;
+        if (state.quizSession.timeRemaining <= 0) {
+          clearInterval(state.quizSession.timerInterval);
+          submitQuiz();
+        } else {
+          const timerEl = document.getElementById("cw-quiz-timer");
+          if (timerEl) {
+            const m = Math.floor(state.quizSession.timeRemaining / 60);
+            const s = state.quizSession.timeRemaining % 60;
+            timerEl.textContent = `⏱ ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+          }
+        }
+      }, 1000);
+    }
+
+    const container = document.getElementById("main-content");
+    if (container) renderView("quiz", container);
+    UNIFIED_AUDIO.play("flip");
+  }
+
+  function resetHintCooldown() {
+    clearInterval(state.hintTimer);
+    state.hintCooldownRemaining = 10;
+    state.isHintUnlocked = false;
+    state.isHintRevealed = false;
+
+    state.hintTimer = setInterval(() => {
+      if (!state.quizSession || state.quizSession.isFinished) {
+        clearInterval(state.hintTimer);
+        return;
+      }
+      state.hintCooldownRemaining--;
+      if (state.hintCooldownRemaining <= 0) {
+        state.isHintUnlocked = true;
+        clearInterval(state.hintTimer);
+      }
+      updateHintUI();
+    }, 1000);
+  }
+
+  function updateHintUI() {
+    const bar = document.getElementById("cw-think-cooldown");
+    if (!bar) return;
+    const pct = Math.min(100, Math.round(((10 - state.hintCooldownRemaining) / 10) * 100));
+
+    if (state.isHintRevealed) {
+      const q = state.quizSession?.questions[state.quizSession.currentIndex];
+      bar.innerHTML = `
+        <div class="hint-clue-card w-full">
+          <div class="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 uppercase">💡 Conceptual Memory Clue</div>
+          <div class="text-xs text-zinc-700 dark:text-zinc-300 font-medium leading-relaxed mt-1">${q ? q.hint : ''}</div>
+        </div>
+      `;
+    } else if (state.isHintUnlocked) {
+      bar.innerHTML = `
+        <button onclick="CW_MODULE.unlockHint()" class="hint-pill-btn">
+          <span>💡 Reveal Conceptual Clue</span>
+        </button>
+      `;
+    } else {
+      bar.innerHTML = `
+        <div class="think-cooldown-bar w-full">
+          <div class="think-cooldown-fill" style="width: ${pct}%"></div>
+          <div class="think-cooldown-label">
+            <span>⏳ Think First: ${state.hintCooldownRemaining}s</span>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function unlockHint() {
+    state.isHintRevealed = true;
+    updateHintUI();
+    UNIFIED_AUDIO.play("flip");
   }
 
   function renderQuizActive(container) {
@@ -599,8 +834,8 @@ const CW_MODULE = (() => {
     const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
     container.innerHTML = `
-      <div class="max-w-2xl mx-auto space-y-6 animate-fade-in">
-        <!-- Top Bar -->
+      <div class="max-w-2xl mx-auto space-y-6 animate-fade-in pb-12">
+        <!-- Top Navigation Status -->
         <div class="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
           <div class="flex items-center gap-2">
             <span class="text-xs font-mono px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold">${q.unit}</span>
@@ -608,7 +843,7 @@ const CW_MODULE = (() => {
           </div>
           <div class="flex items-center gap-3">
             ${s.mode === 'timed' ? `
-              <span class="text-xs font-mono font-bold ${s.timeRemaining < 300 ? 'text-rose-500 animate-pulse' : 'text-zinc-700 dark:text-zinc-300'}">
+              <span id="cw-quiz-timer" class="text-xs font-mono font-bold ${s.timeRemaining < 300 ? 'text-rose-500 animate-pulse' : 'text-zinc-700 dark:text-zinc-300'}">
                 ⏱ ${timeStr}
               </span>
             ` : ''}
@@ -624,7 +859,7 @@ const CW_MODULE = (() => {
             ${q.question}
           </h3>
 
-          <!-- Options -->
+          <!-- Options Grid -->
           <div class="space-y-2.5">
             ${q.options.map((opt, idx) => {
               const letter = String.fromCharCode(65 + idx);
@@ -655,19 +890,24 @@ const CW_MODULE = (() => {
             }).join('')}
           </div>
 
+          <!-- Think-First Hint Cooldown Slot -->
+          ${!isAnswered ? `
+            <div id="cw-think-cooldown" class="pt-2"></div>
+          ` : ''}
+
           <!-- Practice Mode Explanation -->
           ${s.mode === 'practice' && isAnswered ? `
             <div class="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5 text-xs animate-fade-in">
-              <strong class="font-mono text-zinc-900 dark:text-zinc-100 block font-semibold">💡 Textbook Explanation</strong>
+              <strong class="font-mono text-zinc-900 dark:text-zinc-100 block font-semibold">💡 Official Rationale & Memory Anchor</strong>
               <p class="text-zinc-600 dark:text-zinc-300 leading-relaxed">${q.explanation}</p>
             </div>
           ` : ''}
         </div>
 
-        <!-- Question Nav Grid -->
+        <!-- Question Navigation Grid -->
         <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
           <div class="flex items-center justify-between">
-            <button onclick="CW_MODULE.navQuiz(-1)" ${s.currentIndex === 0 ? 'disabled' : ''} class="px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-xs font-medium disabled:opacity-40">
+            <button onclick="CW_MODULE.navQuiz(-1)" ${s.currentIndex === 0 ? 'disabled' : ''} class="px-3.5 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-medium disabled:opacity-40">
               ◀ Prev
             </button>
             <div class="flex items-center gap-1.5 flex-wrap justify-center max-w-sm">
@@ -687,11 +927,11 @@ const CW_MODULE = (() => {
               }).join('')}
             </div>
             ${s.currentIndex === s.questions.length - 1 ? `
-              <button onclick="CW_MODULE.submitQuiz()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">
+              <button onclick="CW_MODULE.submitQuiz()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">
                 Finish ✓
               </button>
             ` : `
-              <button onclick="CW_MODULE.navQuiz(1)" class="px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-xs font-medium">
+              <button onclick="CW_MODULE.navQuiz(1)" class="px-3.5 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-medium">
                 Next ▶
               </button>
             `}
@@ -699,203 +939,10 @@ const CW_MODULE = (() => {
         </div>
       </div>
     `;
-  }
 
-  function renderQuizResults(container) {
-    const s = state.quizSession;
-    let correctCount = 0;
-    s.questions.forEach((q, idx) => {
-      if (s.userAnswers[idx] === q.answer) correctCount++;
-    });
-
-    const scorePct = Math.round((correctCount / s.questions.length) * 100);
-    const grade = getBatStateUGrade(scorePct);
-
-    container.innerHTML = `
-      <div class="max-w-2xl mx-auto space-y-6 animate-fade-in py-4">
-        <!-- Results Banner -->
-        <div class="p-6 sm:p-8 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-center space-y-3">
-          <span class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">Preliminary Diagnostic Assessment</span>
-          <div class="text-5xl sm:text-6xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
-            ${scorePct}%
-          </div>
-          <div class="text-xs font-mono text-zinc-500">
-            ${correctCount} of ${s.questions.length} Questions Correct
-          </div>
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-bold ${grade.color}">
-            BatStateU Equivalent: ${grade.grade} • ${grade.desc}
-          </div>
-        </div>
-
-        <div class="flex items-center justify-center gap-3">
-          <button onclick="CW_MODULE.startQuiz(CW_MODULE.state.quizSession.mode)" class="px-4 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-semibold hover:opacity-90">
-            🔄 Retake Exam
-          </button>
-          <button onclick="CW_MODULE.closeQuiz()" class="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-800">
-            Back to Overview
-          </button>
-        </div>
-
-        <!-- Question Review -->
-        <div class="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-          <h4 class="text-sm font-mono uppercase tracking-wider text-zinc-500 font-semibold">Detailed Question Review</h4>
-          <div class="space-y-4">
-            ${s.questions.map((q, idx) => {
-              const userAns = s.userAnswers[idx];
-              const isCorrect = userAns === q.answer;
-              return `
-                <div class="p-4 rounded-xl border ${isCorrect ? 'border-emerald-300 dark:border-emerald-950 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-rose-300 dark:border-rose-950 bg-rose-50/40 dark:bg-rose-950/20'} space-y-2 text-xs">
-                  <div class="flex items-start justify-between gap-2">
-                    <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
-                      Q${idx + 1}: ${q.question}
-                    </strong>
-                    <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${isCorrect ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/20 text-rose-600 dark:text-rose-400'}">
-                      ${isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                    </span>
-                  </div>
-                  <div class="space-y-1 text-zinc-600 dark:text-zinc-300">
-                    <div>Your answer: <span class="font-medium ${isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${userAns || 'None (Skipped)'}</span></div>
-                    ${!isCorrect ? `<div>Correct answer: <span class="font-medium text-emerald-600 dark:text-emerald-400">${q.answer}</span></div>` : ''}
-                  </div>
-                  <p class="text-[11px] text-zinc-500 dark:text-zinc-400 pt-1 border-t border-zinc-200 dark:border-zinc-800">
-                    💡 ${q.explanation}
-                  </p>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // --- CONTROLLER ACTIONS ---
-  function filterGuideUnit(unit) {
-    state.selectedUnit = unit;
-    const container = document.getElementById("main-content");
-    if (container) renderView("guide", container);
-  }
-
-  function onSearch(query) {
-    state.searchQuery = query;
-    const container = document.getElementById("main-content");
-    if (container) renderView("guide", container);
-  }
-
-  function filterFlashcards(unit) {
-    state.selectedUnit = unit;
-    if (unit === "all") {
-      state.filteredCards = [...CW_DATA.flashcards];
-    } else {
-      state.filteredCards = CW_DATA.flashcards.filter(c => c.unit === unit);
+    if (!isAnswered) {
+      updateHintUI();
     }
-    state.currentCardIndex = 0;
-    state.isCardFlipped = false;
-    const container = document.getElementById("main-content");
-    if (container) renderView("flashcards", container);
-  }
-
-  function shuffleFlashcards() {
-    for (let i = state.filteredCards.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [state.filteredCards[i], state.filteredCards[j]] = [state.filteredCards[j], state.filteredCards[i]];
-    }
-    state.currentCardIndex = 0;
-    state.isCardFlipped = false;
-    const container = document.getElementById("main-content");
-    if (container) renderView("flashcards", container);
-    UNIFIED_AUDIO.play("flip");
-  }
-
-  function toggleFlip() {
-    state.isCardFlipped = !state.isCardFlipped;
-    const flipper = document.getElementById("cw-flashcard-flipper");
-    if (flipper) flipper.classList.toggle("flipped", state.isCardFlipped);
-    UNIFIED_AUDIO.play("flip");
-  }
-
-  function nextCard() {
-    if (state.filteredCards.length === 0) return;
-    state.currentCardIndex = (state.currentCardIndex + 1) % state.filteredCards.length;
-    state.isCardFlipped = false;
-    const container = document.getElementById("main-content");
-    if (container) renderView("flashcards", container);
-    UNIFIED_AUDIO.play("flip");
-  }
-
-  function prevCard() {
-    if (state.filteredCards.length === 0) return;
-    state.currentCardIndex = (state.currentCardIndex - 1 + state.filteredCards.length) % state.filteredCards.length;
-    state.isCardFlipped = false;
-    const container = document.getElementById("main-content");
-    if (container) renderView("flashcards", container);
-    UNIFIED_AUDIO.play("flip");
-  }
-
-  function markCard(isMastered) {
-    const card = state.filteredCards[state.currentCardIndex];
-    if (!card) return;
-
-    if (isMastered) {
-      if (!state.masteredCards.includes(card.id)) state.masteredCards.push(card.id);
-      state.learningCards = state.learningCards.filter(id => id !== card.id);
-      UNIFIED_AUDIO.play("correct");
-    } else {
-      if (!state.learningCards.includes(card.id)) state.learningCards.push(card.id);
-      state.masteredCards = state.masteredCards.filter(id => id !== card.id);
-      UNIFIED_AUDIO.play("wrong");
-    }
-
-    saveModuleState();
-    nextCard();
-  }
-
-  function startQuiz(mode) {
-    const shuffledQuestions = [...CW_DATA.quizQuestions].map(q => {
-      const shuffledOpts = [...q.options];
-      for (let i = shuffledOpts.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledOpts[i], shuffledOpts[j]] = [shuffledOpts[j], shuffledOpts[i]];
-      }
-      return { ...q, options: shuffledOpts };
-    });
-
-    for (let i = shuffledQuestions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
-    }
-
-    state.quizSession = {
-      mode,
-      questions: shuffledQuestions,
-      currentIndex: 0,
-      userAnswers: {},
-      flagged: {},
-      timeRemaining: 1500, // 25 mins
-      timerInterval: null,
-      isFinished: false
-    };
-
-    if (mode === "timed") {
-      state.quizSession.timerInterval = setInterval(() => {
-        if (!state.quizSession || state.quizSession.isFinished) {
-          clearInterval(state.quizSession?.timerInterval);
-          return;
-        }
-        state.quizSession.timeRemaining--;
-        if (state.quizSession.timeRemaining <= 0) {
-          clearInterval(state.quizSession.timerInterval);
-          submitQuiz();
-        } else {
-          const container = document.getElementById("main-content");
-          if (container) renderView("quiz", container);
-        }
-      }, 1000);
-    }
-
-    const container = document.getElementById("main-content");
-    if (container) renderView("quiz", container);
-    UNIFIED_AUDIO.play("flip");
   }
 
   function selectAnswer(ans) {
@@ -923,15 +970,20 @@ const CW_MODULE = (() => {
 
   function navQuiz(delta) {
     if (!state.quizSession) return;
-    state.quizSession.currentIndex = Math.max(0, Math.min(state.quizSession.questions.length - 1, state.quizSession.currentIndex + delta));
-    const container = document.getElementById("main-content");
-    if (container) renderView("quiz", container);
-    UNIFIED_AUDIO.play("flip");
+    const nextIdx = Math.max(0, Math.min(state.quizSession.questions.length - 1, state.quizSession.currentIndex + delta));
+    if (nextIdx !== state.quizSession.currentIndex) {
+      state.quizSession.currentIndex = nextIdx;
+      resetHintCooldown();
+      const container = document.getElementById("main-content");
+      if (container) renderView("quiz", container);
+      UNIFIED_AUDIO.play("flip");
+    }
   }
 
   function jumpQuiz(idx) {
     if (!state.quizSession) return;
     state.quizSession.currentIndex = idx;
+    resetHintCooldown();
     const container = document.getElementById("main-content");
     if (container) renderView("quiz", container);
     UNIFIED_AUDIO.play("flip");
@@ -940,6 +992,7 @@ const CW_MODULE = (() => {
   function submitQuiz() {
     if (!state.quizSession) return;
     clearInterval(state.quizSession.timerInterval);
+    clearInterval(state.hintTimer);
     state.quizSession.isFinished = true;
 
     let correctCount = 0;
@@ -968,25 +1021,334 @@ const CW_MODULE = (() => {
     if (container) renderView("quiz", container);
   }
 
+  function renderQuizResults(container) {
+    const s = state.quizSession;
+    const missedQuestions = [];
+    let correctCount = 0;
+
+    s.questions.forEach((q, idx) => {
+      if (s.userAnswers[idx] === q.answer) {
+        correctCount++;
+      } else {
+        missedQuestions.push(q);
+      }
+    });
+
+    const scorePct = Math.round((correctCount / s.questions.length) * 100);
+    const grade = getBatStateUGrade(scorePct);
+
+    container.innerHTML = `
+      <div class="max-w-2xl mx-auto space-y-6 animate-fade-in py-4 pb-12">
+        <!-- Results Hero Banner -->
+        <div class="ios-inset-card p-6 sm:p-8 text-center space-y-3">
+          <span class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-semibold">Diagnostic Performance Report</span>
+          <div class="text-5xl sm:text-6xl font-serif font-bold text-zinc-900 dark:text-zinc-100">
+            ${scorePct}%
+          </div>
+          <div class="text-xs font-mono text-zinc-500">
+            ${correctCount} of ${s.questions.length} Items Correct
+          </div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 text-xs font-mono font-bold ${grade.color}">
+            BatStateU Equivalent: ${grade.grade} • ${grade.desc}
+          </div>
+        </div>
+
+        <!-- Shuffled Retry Controls -->
+        <div class="flex items-center justify-center gap-3 flex-wrap">
+          <button onclick="CW_MODULE.retryQuiz()" class="px-4 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-semibold hover:opacity-90">
+            🔄 Retry All (Shuffled)
+          </button>
+          ${missedQuestions.length > 0 ? `
+            <button onclick="CW_MODULE.drillMissedQuiz()" class="px-4 py-2.5 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 text-xs font-semibold hover:bg-rose-100">
+              ⚡ Drill Missed Only (${missedQuestions.length} Items)
+            </button>
+          ` : ''}
+          <button onclick="CW_MODULE.closeQuiz()" class="px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-800">
+            Back to Overview
+          </button>
+        </div>
+
+        <!-- Question Review Cards -->
+        <div class="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <h4 class="text-sm font-mono uppercase tracking-wider text-zinc-500 font-semibold">Detailed Question Review</h4>
+          <div class="space-y-3">
+            ${s.questions.map((q, idx) => {
+              const userAns = s.userAnswers[idx];
+              const isCorrect = userAns === q.answer;
+              return `
+                <div class="p-4 rounded-xl border ${isCorrect ? 'border-emerald-300 dark:border-emerald-950 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-rose-300 dark:border-rose-950 bg-rose-50/40 dark:bg-rose-950/20'} space-y-2 text-xs">
+                  <div class="flex items-start justify-between gap-2">
+                    <strong class="font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
+                      Q${idx + 1}: ${q.question}
+                    </strong>
+                    <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${isCorrect ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/20 text-rose-600 dark:text-rose-400'}">
+                      ${isCorrect ? '✓ Correct' : '✗ Missed'}
+                    </span>
+                  </div>
+                  <div class="space-y-1 text-zinc-600 dark:text-zinc-300">
+                    <div>Your answer: <span class="font-medium ${isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${userAns || 'None (Skipped)'}</span></div>
+                    ${!isCorrect ? `<div>Correct answer: <span class="font-medium text-emerald-600 dark:text-emerald-400">${q.answer}</span></div>` : ''}
+                  </div>
+                  <p class="text-[11px] text-zinc-500 dark:text-zinc-400 pt-1 border-t border-zinc-200 dark:border-zinc-800">
+                    💡 ${q.explanation}
+                  </p>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function retryQuiz() {
+    startQuiz(state.quizSession?.mode || "practice");
+  }
+
+  function drillMissedQuiz() {
+    if (!state.quizSession) return;
+    const missed = state.quizSession.questions.filter((q, idx) => state.quizSession.userAnswers[idx] !== q.answer);
+    if (missed.length > 0) {
+      startQuiz(state.quizSession.mode || "practice", missed);
+    }
+  }
+
   function closeQuiz() {
+    clearInterval(state.quizSession?.timerInterval);
+    clearInterval(state.hintTimer);
     state.quizSession = null;
-    UNIFIED_ROUTER.switchTab("overview");
+    UNIFIED_ROUTER.selectTarget("cw", state.termFocus, "cheatsheet");
+  }
+
+  // ==========================================
+  // 4. GUIDE QUESTIONS & ACTIVE RECALL DRILL
+  // ==========================================
+  function renderStudyGuide(container) {
+    const filteredGuideQuestions = CW_DATA.guideQuestions.filter(g => {
+      // Category filter
+      if (state.selectedGuideLesson === "Lesson 2" && !g.lesson.includes("Lesson 2")) return false;
+      if (state.selectedGuideLesson === "Lesson 3" && !g.lesson.includes("Lesson 3")) return false;
+      if (state.selectedGuideLesson === "midterm" && g.isMidterm === false) return false;
+
+      // Search filter
+      if (state.guideSearchQuery) {
+        const q = state.guideSearchQuery.toLowerCase();
+        return g.question.toLowerCase().includes(q) ||
+               g.answer.toLowerCase().includes(q) ||
+               g.mnemonic.toLowerCase().includes(q);
+      }
+      return true;
+    });
+
+    const reviewedCount = CW_DATA.guideQuestions.filter(g => state.guideReviewed[g.num]).length;
+
+    container.innerHTML = `
+      <div class="space-y-6 animate-fade-in pb-16 prose-container">
+        
+        <!-- Search and Filter Bar -->
+        <div class="space-y-3 pb-4 border-b border-zinc-200 dark:border-zinc-800">
+          <div class="flex items-center justify-between">
+            <span class="quiet-chip">ACTIVE RECALL SELF-TESTING</span>
+            <span class="text-[11px] font-mono text-zinc-400">${reviewedCount}/${CW_DATA.guideQuestions.length} Reviewed</span>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <input
+              type="text"
+              placeholder="Search concepts, terms, definitions..."
+              value="${state.guideSearchQuery}"
+              oninput="CW_MODULE.onSearchGuide(this.value)"
+              class="flex-1 px-3.5 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-500"
+            />
+            <div class="flex items-center gap-1.5 overflow-x-auto">
+              <button onclick="CW_MODULE.filterGuide('midterm')" class="px-2.5 py-1.5 rounded-lg text-xs font-mono ${state.selectedGuideLesson === 'midterm' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">Midterm Focus</button>
+              <button onclick="CW_MODULE.filterGuide('Lesson 2')" class="px-2.5 py-1.5 rounded-lg text-xs font-mono ${state.selectedGuideLesson === 'Lesson 2' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">Lesson 2</button>
+              <button onclick="CW_MODULE.filterGuide('Lesson 3')" class="px-2.5 py-1.5 rounded-lg text-xs font-mono ${state.selectedGuideLesson === 'Lesson 3' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">Lesson 3</button>
+              <button onclick="CW_MODULE.filterGuide('all')" class="px-2.5 py-1.5 rounded-lg text-xs font-mono ${state.selectedGuideLesson === 'all' ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}">All</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions List -->
+        <div class="space-y-4">
+          ${filteredGuideQuestions.length > 0 ? filteredGuideQuestions.map(g => {
+            const isRevealed = !!state.revealedGuideAnswers[g.num];
+            const isReviewed = !!state.guideReviewed[g.num];
+
+            return `
+              <div class="ios-inset-card p-4 sm:p-5 space-y-3 transition-colors ${isReviewed ? 'border-emerald-300/80 dark:border-emerald-900/60' : ''}">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="space-y-1">
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-semibold">${g.lesson}</span>
+                    <h4 class="text-sm sm:text-base font-serif font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
+                      Q${g.num}. ${g.question}
+                    </h4>
+                  </div>
+                  <button
+                    onclick="CW_MODULE.toggleGuideReviewed(${g.num})"
+                    class="p-2 rounded-lg text-xs font-mono transition-colors shrink-0 ${isReviewed ? 'bg-emerald-500 text-white' : 'border border-zinc-300 dark:border-zinc-700 text-zinc-400 hover:text-zinc-700'}"
+                    title="${isReviewed ? 'Marked as Reviewed' : 'Mark as Reviewed'}"
+                  >
+                    ${isReviewed ? '✓ Reviewed' : 'Mark Read'}
+                  </button>
+                </div>
+
+                <div class="text-[11px] font-mono text-zinc-500 italic">
+                  ${g.mnemonic}
+                </div>
+
+                <!-- Answer Reveal Toggle -->
+                <div class="pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60">
+                  ${isRevealed ? `
+                    <div class="space-y-2 animate-fade-in">
+                      <div class="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans border border-zinc-200/60 dark:border-zinc-800/60">
+                        ${g.answer}
+                      </div>
+                      <button onclick="CW_MODULE.toggleGuideAnswer(${g.num})" class="text-[11px] font-mono text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                        ▲ Hide Answer
+                      </button>
+                    </div>
+                  ` : `
+                    <button onclick="CW_MODULE.toggleGuideAnswer(${g.num})" class="w-full py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800/80 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-xs font-mono text-zinc-700 dark:text-zinc-300 font-semibold transition-colors">
+                      ▼ Reveal Answer & Check Recall
+                    </button>
+                  `}
+                </div>
+              </div>
+            `;
+          }).join('') : `
+            <div class="p-8 text-center text-sm text-zinc-500">
+              No questions found matching "${state.guideSearchQuery}".
+            </div>
+          `}
+        </div>
+
+      </div>
+    `;
+  }
+
+  // ==========================================
+  // CONTROLLER ACTIONS & STATE HANDLERS
+  // ==========================================
+  function setTermFocus(term) {
+    state.termFocus = term;
+    saveModuleState();
+  }
+
+  function selectIntegrationStage(stageNum) {
+    state.activeIntegrationStage = stageNum;
+    const container = document.getElementById("main-content");
+    if (container) renderCheatSheet(container);
+    UNIFIED_AUDIO.play("flip");
+  }
+
+  function filterFlashcards(unit) {
+    state.selectedFlashcardUnit = unit;
+    if (unit === "all") {
+      state.filteredCards = [...CW_DATA.flashcards];
+    } else if (unit === "midterm") {
+      state.filteredCards = CW_DATA.flashcards.filter(c => c.isMidterm !== false);
+    } else {
+      state.filteredCards = CW_DATA.flashcards.filter(c => c.unit.includes(unit) || c.category.includes(unit));
+    }
+    state.currentCardIndex = 0;
+    state.isCardFlipped = false;
+    const container = document.getElementById("main-content");
+    if (container) renderFlashcards(container);
+  }
+
+  function shuffleFlashcards() {
+    for (let i = state.filteredCards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [state.filteredCards[i], state.filteredCards[j]] = [state.filteredCards[j], state.filteredCards[i]];
+    }
+    state.currentCardIndex = 0;
+    state.isCardFlipped = false;
+    const container = document.getElementById("main-content");
+    if (container) renderFlashcards(container);
+    UNIFIED_AUDIO.play("flip");
+  }
+
+  function toggleFlip() {
+    state.isCardFlipped = !state.isCardFlipped;
+    const flipper = document.getElementById("cw-flashcard-flipper");
+    if (flipper) flipper.classList.toggle("flipped", state.isCardFlipped);
+    UNIFIED_AUDIO.play("flip");
+  }
+
+  function nextCard() {
+    if (state.filteredCards.length === 0) return;
+    state.currentCardIndex = (state.currentCardIndex + 1) % state.filteredCards.length;
+    state.isCardFlipped = false;
+    const container = document.getElementById("main-content");
+    if (container) renderFlashcards(container);
+    UNIFIED_AUDIO.play("flip");
+  }
+
+  function prevCard() {
+    if (state.filteredCards.length === 0) return;
+    state.currentCardIndex = (state.currentCardIndex - 1 + state.filteredCards.length) % state.filteredCards.length;
+    state.isCardFlipped = false;
+    const container = document.getElementById("main-content");
+    if (container) renderFlashcards(container);
+    UNIFIED_AUDIO.play("flip");
+  }
+
+  function markCard(isMastered) {
+    const card = state.filteredCards[state.currentCardIndex];
+    if (!card) return;
+
+    state.cardMastery[card.id] = isMastered;
+    saveModuleState();
+
+    if (isMastered) {
+      UNIFIED_AUDIO.play("correct");
+    } else {
+      UNIFIED_AUDIO.play("wrong");
+    }
+
+    nextCard();
+  }
+
+  function filterGuide(lesson) {
+    state.selectedGuideLesson = lesson;
+    const container = document.getElementById("main-content");
+    if (container) renderStudyGuide(container);
+  }
+
+  function toggleGuideAnswer(num) {
+    state.revealedGuideAnswers[num] = !state.revealedGuideAnswers[num];
+    const container = document.getElementById("main-content");
+    if (container) renderStudyGuide(container);
+    UNIFIED_AUDIO.play("flip");
+  }
+
+  function toggleGuideReviewed(num) {
+    state.guideReviewed[num] = !state.guideReviewed[num];
+    saveModuleState();
+    const container = document.getElementById("main-content");
+    if (container) renderStudyGuide(container);
+    UNIFIED_AUDIO.play("correct");
+  }
+
+  function onSearchGuide(query) {
+    state.guideSearchQuery = query;
+    const container = document.getElementById("main-content");
+    if (container) renderStudyGuide(container);
+  }
+
+  function setQuizMode(scope) {
+    state.selectedQuizScope = scope;
   }
 
   return {
     id: "cw",
-    tabs: [
-      { id: "overview", name: "Overview" },
-      { id: "guide", name: "Study Guide" },
-      { id: "flashcards", name: "Flashcards" },
-      { id: "quiz", name: "Exam Simulator" }
-    ],
     state,
     init,
     renderView,
     calculateReadiness,
-    filterGuideUnit,
-    onSearch,
+    setTermFocus,
+    selectIntegrationStage,
     filterFlashcards,
     shuffleFlashcards,
     toggleFlip,
@@ -999,7 +1361,15 @@ const CW_MODULE = (() => {
     navQuiz,
     jumpQuiz,
     submitQuiz,
-    closeQuiz
+    closeQuiz,
+    retryQuiz,
+    drillMissedQuiz,
+    unlockHint,
+    filterGuide,
+    toggleGuideAnswer,
+    toggleGuideReviewed,
+    onSearchGuide,
+    setQuizMode
   };
 })();
 
