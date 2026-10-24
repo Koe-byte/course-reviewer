@@ -184,7 +184,7 @@ const UNIFIED_ROUTER = (() => {
         { id: "midterm", name: "Midterm", active: true, desc: "Mobile IP, GSM Architecture & Cellular" },
         { id: "final", name: "Final", active: false, desc: "Advanced Wireless & 5G Slicing" }
       ],
-      defaultTerm: "midterm",
+      defaultTerm: "prelim",
       defaultTool: "cheatsheet"
     },
     hci: {
@@ -208,11 +208,11 @@ const UNIFIED_ROUTER = (() => {
       shortTitle: "Contemp World",
       monogram: "CW",
       terms: [
-        { id: "midterm", name: "Midterm", active: true, desc: "Lessons 2 & 3: Global Structure & Regions" },
         { id: "prelim", name: "Prelim", active: true, desc: "Unit 1: Introduction to Globalization" },
+        { id: "midterm", name: "Midterm", active: true, desc: "Lessons 2 & 3: Global Structure & Regions" },
         { id: "final", name: "Final", active: false, desc: "Global Divides & Sustainability" }
       ],
-      defaultTerm: "midterm",
+      defaultTerm: "prelim",
       defaultTool: "cheatsheet"
     }
   };
@@ -229,6 +229,7 @@ const UNIFIED_ROUTER = (() => {
   let currentTerm = null;
   let currentTool = null;
   let expandedCourses = { mobcom: true, hci: false, cw: false };
+  let expandedTerms = { mobcom: "prelim", hci: "prelim", cw: "prelim" };
 
   function init() {
     Object.values(modules).forEach(mod => {
@@ -279,6 +280,9 @@ const UNIFIED_ROUTER = (() => {
       termId = meta.defaultTerm;
     }
     currentTerm = termId;
+
+    // Automatically expand the active major exam within this course and close others
+    expandedTerms[courseId] = termId;
 
     // Tool mapping
     if (!toolId) {
@@ -366,9 +370,36 @@ const UNIFIED_ROUTER = (() => {
     // If it was closed, open only this one
     if (!isCurrentlyExpanded) {
       expandedCourses[courseId] = true;
+      if (!expandedTerms[courseId]) {
+        expandedTerms[courseId] = courseMeta[courseId].defaultTerm;
+      }
     }
 
     renderSidebarTree();
+  }
+
+  function toggleTermAccordion(courseId, termId) {
+    const meta = courseMeta[courseId];
+    if (!meta) return;
+    const term = meta.terms.find(t => t.id === termId);
+    if (!term || !term.active) return;
+
+    // Ensure parent course is expanded
+    Object.keys(courseMeta).forEach(id => {
+      expandedCourses[id] = (id === courseId);
+    });
+
+    const isCurrentlyExpanded = (expandedTerms[courseId] === termId);
+
+    if (isCurrentlyExpanded) {
+      // Collapse this major exam
+      expandedTerms[courseId] = null;
+      renderSidebarTree();
+    } else {
+      // Expand this major exam and close any other major exam in this course, switching to it
+      expandedTerms[courseId] = termId;
+      selectTarget(courseId, termId, currentTool || meta.defaultTool);
+    }
   }
 
   function renderSidebarTree() {
@@ -406,50 +437,62 @@ const UNIFIED_ROUTER = (() => {
 
           <!-- Child Tree: Terms ➔ Tools -->
           ${isExpanded ? `
-            <div class="pl-4 pr-1 py-1 space-y-2 border-l border-zinc-200/60 dark:border-zinc-800/60 ml-4">
+            <div class="pl-3 pr-1 py-1 space-y-1.5 border-l border-zinc-200/60 dark:border-zinc-800/60 ml-4">
               ${course.terms.map(term => {
                 const isSelectedTerm = isCurrentCourse && currentTerm === term.id;
+                const isTermExpanded = expandedTerms[course.id] === term.id;
 
                 if (!term.active) {
                   return `
-                    <div class="px-2 py-1 flex items-center justify-between text-[11px] text-zinc-400 dark:text-zinc-600 select-none">
-                      <span class="font-mono">${term.name}</span>
-                      <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800/50">Soon</span>
+                    <div class="px-2 py-1.5 flex items-center justify-between text-[11px] text-zinc-400 dark:text-zinc-600 select-none">
+                      <span class="font-mono font-bold uppercase tracking-wider">${term.name} Exam</span>
+                      <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800/50">Soon</span>
                     </div>
                   `;
                 }
 
                 return `
                   <div class="space-y-1">
-                    <!-- Term Label -->
-                    <div class="flex items-center justify-between px-2 pt-1 pb-0.5 text-[11px] font-mono font-bold uppercase tracking-wider ${
-                      isSelectedTerm ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400'
-                    }">
-                      <span>${term.name} Exam</span>
-                      
-                    </div>
+                    <!-- Major Exam Collapsible Header -->
+                    <button
+                      onclick="UNIFIED_ROUTER.toggleTermAccordion('${course.id}', '${term.id}')"
+                      class="group w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
+                        isSelectedTerm
+                          ? 'text-zinc-900 dark:text-zinc-100 font-bold'
+                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
+                      }"
+                    >
+                      <span class="text-[11px] font-mono uppercase tracking-wider font-bold">
+                        ${term.name} Exam
+                      </span>
+                      <svg class="w-3 h-3 text-zinc-400 transition-transform duration-200 ${isTermExpanded ? 'rotate-90 text-zinc-700 dark:text-zinc-200' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
 
-                    <!-- 4 Core Study Tools -->
-                    <div class="space-y-0.5">
-                      ${standardTools.map(tool => {
-                        const isToolActive = isSelectedTerm && currentTool === tool.id;
-                        return `
-                          <button
-                            onclick="UNIFIED_ROUTER.selectTarget('${course.id}', '${term.id}', '${tool.id}')"
-                            class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors ${
-                              isToolActive
-                                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium shadow-sm'
-                                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/50'
-                            }"
-                          >
-                            <svg class="w-3.5 h-3.5 opacity-70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="${tool.icon}" />
-                            </svg>
-                            <span class="truncate">${tool.name}</span>
-                          </button>
-                        `;
-                      }).join('')}
-                    </div>
+                    <!-- 4 Core Study Tools (Collapsed unless isTermExpanded) -->
+                    ${isTermExpanded ? `
+                      <div class="pl-2 space-y-0.5 animate-fade-in">
+                        ${standardTools.map(tool => {
+                          const isToolActive = isSelectedTerm && currentTool === tool.id;
+                          return `
+                            <button
+                              onclick="UNIFIED_ROUTER.selectTarget('${course.id}', '${term.id}', '${tool.id}')"
+                              class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors ${
+                                isToolActive
+                                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium shadow-sm'
+                                  : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/50'
+                              }"
+                            >
+                              <svg class="w-3.5 h-3.5 opacity-70 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="${tool.icon}" />
+                              </svg>
+                              <span class="truncate">${tool.name}</span>
+                            </button>
+                          `;
+                        }).join('')}
+                      </div>
+                    ` : ''}
                   </div>
                 `;
               }).join('')}
@@ -703,6 +746,7 @@ const UNIFIED_ROUTER = (() => {
     selectTarget,
     switchTool,
     toggleCourseAccordion,
+    toggleTermAccordion,
     backToLanding,
     toggleMobileSidebar,
     closeMobileSidebar,
