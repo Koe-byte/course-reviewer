@@ -39,3 +39,19 @@ _Avoid_: Progress score, gamification level, XP
 **Pointer Focus**:
 Content and exam objectives specifically emphasized by official faculty examination pointers.
 _Avoid_: Hot topics, cheat items, leaks
+
+**Auditory Walkthrough**:
+A dedicated hands-free Study Tool within a Term Exam Scope delivering soothing, continuous audio narration for passive learning during transit or rest.
+_Avoid_: Audio player, podcast mode, voice tab
+
+**Companion Study Narration**:
+A comforting, conversational auditory lecture format where Cyrene reads and explains Cheat Sheet concepts in an intimate, reassuring educational cadence (styled after educational study-companion / ASMR tutoring), guiding the student through terms, definitions, and exam pointers hands-free.
+_Avoid_: Robotic TTS, quiz buzzer, prompt-pause-reveal
+
+**Media Session Lock-Screen Control**:
+Mobile hardware and OS-level media integration via `navigator.mediaSession`, enabling background playback, earbud click navigation (play/pause/skip), and lock-screen metadata display while the screen is off.
+_Avoid_: Background audio hack, lock-screen widget
+
+**Mini-Player Bar**:
+A compact, floating audio control bar positioned above the mobile Bottom Control Dock, providing continuous playback control (play/pause, track title, scrub progress) while the student browses other Study Tools.
+_Avoid_: Floating audio bubble, bottom popup, music bar

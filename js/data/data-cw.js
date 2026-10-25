@@ -1380,6 +1380,99 @@ const CW_DATA = {
         }
       ]
     }
+  },
+
+  // ==========================================
+  // AUDITORY WALKTHROUGH AUDIO DECK (CYRENE)
+  // ==========================================
+  audioDeck: {
+    voice: "Cyrene",
+    character: "Cyrene (Honkai: Star Rail)",
+    voiceActor: "Aiden Dawn",
+    style: "Companion Study Narration",
+    description: "Soothing educational companion series guiding you through high-yield mnemonics, global structures, and regional dynamics.",
+    tracks: [
+      {
+        id: "cw_track1_mnemonics",
+        title: "Track 1: Core Memory Anchors & Mnemonics",
+        subtitle: "P-G-T-S, BRICS, 7 Stages & Friedman Forces",
+        src: "audio/cw/prelim/cw_track1_mnemonics.mp3",
+        duration: 260,
+        bookmarks: [
+          { time: 0, label: "Introduction" },
+          { time: 22, label: "P-G-T-S: 4 Elements of a State" },
+          { time: 85, label: "BRICS Emerging Economies" },
+          { time: 145, label: "7 Stages of Economic Integration" },
+          { time: 215, label: "Friedman: Straitjacket & Herd" }
+        ],
+        transcript: [
+          { time: 0, speaker: "Cyrene", text: "Welcome back. Settle in, take a slow, comfortable breath, and let's review our core memory anchors for The Contemporary World together." },
+          { time: 22, speaker: "Cyrene", text: "Remember our hook: People Govern Their State. P stands for Population, the people living in the state. G is Government, the agency and system that organizes and manages the state. T is Territory, the defined land, water, and airspace. And S is Sovereignty, the supreme power of a state to govern itself without external interference or control." },
+          { time: 85, speaker: "Cyrene", text: "Next, let's remember BRICS. B-R-I-C-S represents the emerging global economic powerhouses known for rapidly growing consumer markets and low production costs: Brazil, Russia, India, China, and South Africa." },
+          { time: 145, speaker: "Cyrene", text: "Now, let's visualize the ladder of economic integration: Please Find Customs Commonly, Every Exchange Complete. PTA, Free Trade Area, Customs Union, Common Market, Economic Union, Economic and Monetary Union, and Complete Economic Integration." },
+          { time: 215, speaker: "Cyrene", text: "Finally, remember Thomas Friedman's concepts: the Golden Straitjacket where the economy grows while politics shrinks, and the borderless Electronic Herd of international capital investors." }
+        ]
+      },
+      {
+        id: "cw_track2_global_structure",
+        title: "Track 2: Lesson 2 - Global Structure & Market Integration",
+        subtitle: "Markets, FDI, GATS, Neoliberalism & UN Peacekeeping",
+        src: "audio/cw/prelim/cw_track2_global_structure.mp3",
+        duration: 310,
+        bookmarks: [
+          { time: 0, label: "Introduction" },
+          { time: 18, label: "Market, Stock & Financial Integration" },
+          { time: 92, label: "Global Corporations & FDI" },
+          { time: 160, label: "GATS & Neoliberal Sovereignty" },
+          { time: 230, label: "UN Peacekeeping & Global Governance" }
+        ],
+        transcript: [
+          { time: 0, speaker: "Cyrene", text: "Hello again. Let's take another peaceful moment to walk through Lesson 2: the global structure of globalization and the institutions that govern world markets." },
+          { time: 18, speaker: "Cyrene", text: "Market Integration means prices of related goods and services move in similar patterns. Stock Market Integration happens when exchanges rise and fall together across borders. Financial Market Integration is an open market economy with a common currency and eliminated tax/regulatory barriers." },
+          { time: 92, speaker: "Cyrene", text: "A Global Corporation operates in two or more countries. The major engine driving corporate growth is Foreign Direct Investment (FDI), investing capital, technology, and management into another nation." },
+          { time: 160, speaker: "Cyrene", text: "Remember the General Agreement on Trade in Services (GATS) from 1995. Neoliberalism champions capital dominance, while Economic Sovereignty is a national government's right to control its own economic destiny." },
+          { time: 230, speaker: "Cyrene", text: "Always remember: the United Nations' most essential signature feature is its Peacekeeping Operations. Contemporary Global Governance is the sum of laws, norms, policies, and institutions organizing international relations." }
+        ]
+      },
+      {
+        id: "cw_track3_world_regions",
+        title: "Track 3: Lesson 3 - World of Regions: Global North & South",
+        subtitle: "Global North, Global South & Asia-Pacific Modernity",
+        src: "audio/cw/prelim/cw_track3_world_regions.mp3",
+        duration: 250,
+        bookmarks: [
+          { time: 0, label: "Introduction" },
+          { time: 15, label: "Global North Characteristics" },
+          { time: 88, label: "Global South & Climate Justice" },
+          { time: 170, label: "Asia-Pacific: Laboratories of Modernity" }
+        ],
+        transcript: [
+          { time: 0, speaker: "Cyrene", text: "Take a calm breath. In this session, let's explore Lesson 3: The World of Regions, looking at the structural divides between the Global North and the Global South." },
+          { time: 15, speaker: "Cyrene", text: "The Global North comprises well-developed, highly industrialized, wealthy countries with advanced technology. They dominate the IMF and World Bank, and are expected to financially and technically support nations affected by environmental degradation." },
+          { time: 88, speaker: "Cyrene", text: "The Global South represents developing nations bearing the negative externalities of deterritorialized capitalism. Today, they lead radical calls for global climate justice and loss-and-damage accountability." },
+          { time: 170, speaker: "Cyrene", text: "Asia and the South Pacific are profound political and economic forces. Rather than an external Western phenomenon, Asia has served as Laboratories of Modernity through centuries of maritime trade networks." }
+        ]
+      },
+      {
+        id: "cw_track4_foundations",
+        title: "Track 4: Unit 1 - Foundations & Waves of Globalization",
+        subtitle: "Steger Framework, Silk Road, 6 Dimensions & Catholic Principles",
+        src: "audio/cw/prelim/cw_track4_foundations.mp3",
+        duration: 280,
+        bookmarks: [
+          { time: 0, label: "Introduction" },
+          { time: 20, label: "Steger's Definition & 4 Characteristics" },
+          { time: 95, label: "The Silk Road & 5 Historical Waves" },
+          { time: 180, label: "6 Dimensions & Catholic Social Principles" }
+        ],
+        transcript: [
+          { time: 0, speaker: "Cyrene", text: "Welcome to our foundational review. Let's trace how Manfred Steger defines globalization and uncover the deep historical waves that shaped our modern world." },
+          { time: 20, speaker: "Cyrene", text: "Manfred Steger defines globalization as the expansion and intensification of social relations and consciousness across world-time and world-space. It creates new networks, expands existing ones, accelerates social exchanges, and deepens global consciousness." },
+          { time: 95, speaker: "Cyrene", text: "The ancient Silk Road linked China, Central Asia, and the Mediterranean. Globalization flows across five eras: Prehistoric, Premodern, Early Modern, Modern industrial capitalism, and our Contemporary digital era." },
+          { time: 180, speaker: "Cyrene", text: "Globalization spans six dimensions: economic, political, cultural, ecological, ideological, and religious. In the Catholic tradition, it is assessed through principles like Subsidiarity, Solidarity, and the Common Good. You are well prepared. Rest peacefully, and trust your preparation." }
+        ]
+      }
+    ]
   }
 };
 

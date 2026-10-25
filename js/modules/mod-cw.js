@@ -123,6 +123,9 @@ const CW_MODULE = (() => {
       case "quiz":
         renderQuiz(container);
         break;
+      case "auditory":
+        renderAuditoryWalkthrough(container);
+        break;
       default:
         renderCheatSheet(container);
     }
@@ -1339,6 +1342,263 @@ const CW_MODULE = (() => {
 
   function setQuizMode(scope) {
     state.selectedQuizScope = scope;
+  }
+
+
+  // ==========================================
+  // AUDITORY WALKTHROUGH VIEW (CYRENE COMPANION)
+  // ==========================================
+  function renderAuditoryWalkthrough(container) {
+    const deck = CW_DATA.audioDeck;
+    if (!deck) {
+      container.innerHTML = `<div class="p-6 text-center text-zinc-500 font-mono text-xs">Audio deck not configured.</div>`;
+      return;
+    }
+
+    const currentTrack = (typeof UNIFIED_PLAYER !== "undefined" && UNIFIED_PLAYER.getActiveTrack()) || deck.tracks[0];
+    const isPlaying = typeof UNIFIED_PLAYER !== "undefined" ? UNIFIED_PLAYER.isPlaying : false;
+    const currentTime = typeof UNIFIED_PLAYER !== "undefined" ? UNIFIED_PLAYER.currentTime : 0;
+    const duration = (typeof UNIFIED_PLAYER !== "undefined" && UNIFIED_PLAYER.duration) || currentTrack.duration;
+    const pct = Math.min(100, (currentTime / (duration || 1)) * 100);
+
+    container.innerHTML = `
+      <div class="space-y-6 sm:space-y-8 animate-fade-in pb-20 prose-container">
+        
+        <!-- Header Banner -->
+        <div class="space-y-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-800/60">
+              🎧 PASSIVE AUDITORY WALKTHROUGH
+            </span>
+            <span class="text-[11px] font-mono text-zinc-400">BatStateU GEd 104 • The Contemporary World</span>
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-serif font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Companion Study Narration
+          </h1>
+          <p class="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            Eyes-free educational review designed for resting, commuting, and auditory reinforcement. Voiced with <strong>Cyrene's</strong> soothing companion tone (Honkai: Star Rail • CV: Aiden Dawn, 48kHz).
+          </p>
+        </div>
+
+        <!-- Now Playing Hero Player Deck -->
+        <div class="ios-inset-card p-5 sm:p-7 space-y-6 bg-gradient-to-br from-white via-zinc-50/50 to-indigo-50/30 dark:from-zinc-900 dark:via-zinc-900/80 dark:to-indigo-950/20 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm rounded-2xl">
+          
+          <!-- Track & Cyrene Info -->
+          <div class="flex items-center gap-4 sm:gap-5">
+            <!-- Vinyl / Cyrene Disc Visual -->
+            <div id="player-disc-disc" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-indigo-900 via-zinc-800 to-indigo-600 p-1 flex items-center justify-center shrink-0 shadow-md ${isPlaying ? 'animate-spin-slow ring-4 ring-indigo-500/20' : ''}">
+              <div class="w-full h-full rounded-full bg-zinc-900 flex flex-col items-center justify-center border-2 border-indigo-400/40 text-center">
+                <span class="text-[9px] font-mono font-bold text-indigo-300">CYRENE</span>
+                <span class="text-[7px] font-mono text-zinc-400">48kHz</span>
+              </div>
+            </div>
+
+            <div class="min-w-0 flex-1 space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-semibold">
+                  Active Chapter
+                </span>
+                <span class="text-[10px] font-mono text-zinc-400">Lock-screen & Earbuds Ready</span>
+              </div>
+              <h2 id="player-track-title" class="text-base sm:text-lg font-serif font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                ${currentTrack.title}
+              </h2>
+              <p id="player-track-subtitle" class="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                ${currentTrack.subtitle}
+              </p>
+            </div>
+          </div>
+
+          <!-- Scrub Progress Bar & Timestamps -->
+          <div class="space-y-1.5">
+            <div class="relative w-full">
+              <div class="w-full bg-zinc-200 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                <div id="player-progress-bar" class="bg-indigo-600 dark:bg-indigo-400 h-full rounded-full transition-all duration-200" style="width: ${pct}%"></div>
+              </div>
+              <input
+                id="player-scrub-slider"
+                type="range"
+                min="0"
+                max="${duration}"
+                value="${currentTime}"
+                oninput="if(typeof UNIFIED_PLAYER !== 'undefined') UNIFIED_PLAYER.seek(this.value)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                title="Seek track"
+              />
+            </div>
+            <div class="flex items-center justify-between text-[11px] font-mono text-zinc-400">
+              <span id="player-time-current">${typeof UNIFIED_PLAYER !== "undefined" ? UNIFIED_PLAYER.formatTime(currentTime) : "00:00"}</span>
+              <span id="player-time-total">${typeof UNIFIED_PLAYER !== "undefined" ? UNIFIED_PLAYER.formatTime(duration) : "04:20"}</span>
+            </div>
+          </div>
+
+          <!-- Transport Controls -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60">
+            <!-- Speed Selector Chips -->
+            <div class="flex items-center gap-1">
+              <span class="text-[10px] font-mono text-zinc-400 mr-1.5 uppercase font-medium">Speed:</span>
+              ${[0.8, 1.0, 1.2, 1.5].map(rate => `
+                <button
+                  data-rate="${rate}"
+                  onclick="if(typeof UNIFIED_PLAYER !== 'undefined') UNIFIED_PLAYER.setRate(${rate})"
+                  class="player-speed-btn px-2 py-1 rounded text-[10px] font-mono font-medium transition-colors ${
+                    (typeof UNIFIED_PLAYER !== "undefined" && UNIFIED_PLAYER.playbackRate === rate) || (typeof UNIFIED_PLAYER === "undefined" && rate === 1.0)
+                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold'
+                      : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-800'
+                  }"
+                >
+                  ${rate}×
+                </button>
+              `).join('')}
+            </div>
+
+            <!-- Main Audio Control Buttons -->
+            <div class="flex items-center gap-3">
+              <button
+                onclick="if(typeof UNIFIED_PLAYER !== 'undefined') UNIFIED_PLAYER.prevTrack()"
+                class="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                title="Previous Track"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+                </svg>
+              </button>
+
+              <button
+                onclick="if(typeof UNIFIED_PLAYER !== 'undefined') UNIFIED_PLAYER.skip(-15)"
+                class="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center font-mono text-xs font-bold"
+                title="Rewind 15 seconds"
+              >
+                -15s
+              </button>
+
+              <button
+                onclick="if(typeof UNIFIED_PLAYER !== 'undefined') UNIFIED_PLAYER.togglePlay()"
+                class="w-12 h-12 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all"
+                title="Play / Pause"
+              >
+                <svg id="player-play-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  ${isPlaying 
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 9v6m4-6v6" />'
+                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />'}
+                </svg>
+              </button>
+
+              <button
+                onclick="if(typeof UNIFIED_PLAYER !== 'undefined') UNIFIED_PLAYER.skip(15)"
+                class="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center font-mono text-xs font-bold"
+                title="Skip ahead 15 seconds"
+              >
+                +15s
+              </button>
+
+              <button
+                onclick="if(typeof UNIFIED_PLAYER !== 'undefined') UNIFIED_PLAYER.nextTrack()"
+                class="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                title="Next Track"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Concept Bookmarks -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+              📌 Instant Topic Bookmarks
+            </span>
+            <span class="text-[10px] font-mono text-zinc-400">Tap to Jump Timestamp</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            ${currentTrack.bookmarks.map(bm => `
+              <button
+                onclick="if(typeof UNIFIED_PLAYER !== 'undefined') UNIFIED_PLAYER.seek(${bm.time})"
+                class="flex items-center justify-between p-2.5 rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 hover:border-indigo-500/50 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20 text-left transition-colors"
+              >
+                <span class="text-xs font-medium text-zinc-800 dark:text-zinc-200 truncate pr-2">${bm.label}</span>
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 shrink-0">
+                  ${typeof UNIFIED_PLAYER !== "undefined" ? UNIFIED_PLAYER.formatTime(bm.time) : "00:00"}
+                </span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Read-Along Companion Transcript -->
+        <div class="ios-inset-card p-5 space-y-3.5">
+          <div class="flex items-center justify-between pb-2 border-b border-zinc-200/60 dark:border-zinc-800/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-mono font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
+                📖 Companion Narration Transcript
+              </span>
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold">
+                Gentle Study Voice
+              </span>
+            </div>
+            <span class="text-[10px] font-mono text-zinc-400">Read Along or Rest</span>
+          </div>
+
+          <div class="space-y-3 max-h-72 overflow-y-auto pr-1 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-serif">
+            ${currentTrack.transcript.map(item => `
+              <div class="p-3 rounded-xl bg-zinc-50/80 dark:bg-zinc-800/40 border border-zinc-200/50 dark:border-zinc-800/50 space-y-1">
+                <div class="flex items-center justify-between font-mono text-[10px] text-zinc-400">
+                  <span class="font-bold text-indigo-600 dark:text-indigo-400">${item.speaker}</span>
+                  <span>${typeof UNIFIED_PLAYER !== "undefined" ? UNIFIED_PLAYER.formatTime(item.time) : "00:00"}</span>
+                </div>
+                <p class="text-zinc-800 dark:text-zinc-200">${item.text}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Scope Chapter Playlist -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+              📑 Examination Scope Playlist (${deck.tracks.length} Chapters)
+            </span>
+            <span class="text-[10px] font-mono text-zinc-400">Full Coverage</span>
+          </div>
+
+          <div class="space-y-2">
+            ${deck.tracks.map((tr, idx) => {
+              const isSelected = (typeof UNIFIED_PLAYER !== "undefined" && UNIFIED_PLAYER.activeTrackIndex === idx) || (typeof UNIFIED_PLAYER === "undefined" && idx === 0);
+              return `
+                <div
+                  onclick="if(typeof UNIFIED_PLAYER !== 'undefined') { UNIFIED_PLAYER.playTrack(${idx}, 'cw'); CW_MODULE.renderView('auditory', document.getElementById('main-content')); }"
+                  class="p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                    isSelected
+                      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-zinc-900 dark:border-zinc-100 shadow-sm'
+                      : 'border-zinc-200/70 dark:border-zinc-800/70 hover:bg-zinc-50 dark:hover:bg-zinc-850'
+                  }"
+                >
+                  <div class="flex items-center gap-3 min-w-0">
+                    <span class="w-6 h-6 rounded-full font-mono text-xs flex items-center justify-center shrink-0 ${
+                      isSelected ? 'bg-white/20 dark:bg-zinc-900/20 text-inherit' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
+                    }">
+                      ${idx + 1}
+                    </span>
+                    <div class="min-w-0">
+                      <h4 class="text-xs sm:text-sm font-serif font-bold truncate">${tr.title}</h4>
+                      <p class="text-[11px] opacity-70 truncate">${tr.subtitle}</p>
+                    </div>
+                  </div>
+                  <div class="text-[10px] font-mono opacity-80 shrink-0">
+                    ${typeof UNIFIED_PLAYER !== "undefined" ? UNIFIED_PLAYER.formatTime(tr.duration) : "04:20"}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+      </div>
+    `;
   }
 
   return {
